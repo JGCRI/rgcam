@@ -1,0 +1,20 @@
+Package: GCAMdashboard
+Title: Explore GCAM Scenarios in an Interactive Dashboard
+Version: 0.0.1
+Authors@R: person("Robert", "Link", email = "robert.link@pnnl.gov", role = c("aut", "cre"))
+Description: The GCAM dashboard is an interactive tool for exploring collections
+    of GCAM scenarios. Its purpose is not to show everything a user might want to
+    know about a scenario, but rather to allow users to quickly get a sense of the
+    key features of a scenario and how a group of related scenarios are similar to
+    and different from one another.
+Depends:
+    R (>= 3.2.3)
+License: GPL-2
+Encoding: UTF-8
+LazyData: true
+Imports:
+    gcammaptools (>= 0.1.0),
+    stringr,
+    lubridate,
+    dplyr
+RoxygenNote: 5.0.1
