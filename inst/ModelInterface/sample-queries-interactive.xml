@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<queries>
+   <queryGroup name="Samples">
+      <ClimateQuery title="CO2 concentrations">
+         <axis1 name="CO2-concentration">none</axis1>
+         <axis2 name="Year">CO2-concentration[@year]</axis2>
+         <xPath buildList="true" dataName="CO2-concentration" group="false" sumAll="false">climate-model/CO2-concentration/text()</xPath>
+         <comments/>
+      </ClimateQuery>
+      <ClimateQuery title="Climate forcing">
+         <axis1 name="forcing-total">none</axis1>
+         <axis2 name="Year">forcing-total[@year]</axis2>
+         <xPath buildList="true" dataName="forcing-total" group="false" sumAll="false">climate-model/forcing-total/text()</xPath>
+         <comments/>
+      </ClimateQuery>
+      <ClimateQuery title="Global mean temperature">
+         <axis1 name="temperature">none</axis1>
+         <axis2 name="Year">global-mean-temperature[@year]</axis2>
+         <xPath buildList="true" dataName="global-mean-temperature" group="false" sumAll="false">climate-model/global-mean-temperature/text()</xPath>
+         <comments/>
+      </ClimateQuery>
+      </queryGroup>
+
+      <queryGroup name="not working">
+
+<!--            <aQuery>
+	<all-regions/> -->
+	<supplyDemandQuery title="Electricity generation by technology (inc solar roofs)">
+          <axis1 name="technology">technology</axis1>
+          <axis2 name="Year">physical-output[@vintage]</axis2>
+          <xPath buildList="true" dataName="output" group="false" sumAll="false">*[@type = 'sector' (: collapse :) and (@name='electricity' or @name='elect_td_bld' or @name='industrial energy use')]//*[@type = 'technology' and not (@name='elect_td_bld' or @name='electricity')]/*[@type='output' (:collapse:) and (@name='electricity' or @name='elect_td_bld')]/physical-output/node()</xPath>
+          <comments/>
+	</supplyDemandQuery>
+<!--      </aQuery> -->
+
+<!--   <aQuery>
+     <all-regions/> -->
+     <supplyDemandQuery title="CO2 Emissions by enduse">
+         <axis1 name="sector">sector[@name]</axis1>
+         <axis2 name="Year">emissions[@year]</axis2>
+         <xPath buildList="true" dataName="input" group="false" sumAll="false">
+               declare function local:append-heirarchy($parent as node(), $append as node()*) as node() {
+	       	 		 let $scn := $parent/ancestor::scenario,
+	       			   	  $rgn := $parent (: /ancestor::region :)
+	       			   return
+	       			   	  document { element scenario {
+	       			 	  					$scn/@*,
+	       			 						element region {
+	       			 							$rgn/@*,
+	       			 							$append
+	       			 						}
+	       			 	  				}
+	       				}
+	       	 		 (: I can get by with just the scenario and region
+	       			 let $new_node := element {local-name($parent)} {$parent/@*, $append} 	
+	       	 		 return
+	       	 		 if(local-name($parent) != 'scenario')
+	       	 		 then local:append-heirarchy($parent/parent::*, $new_node)
+	       	 		 else document { $new_node } :)
+	       	 	 }; 
+	       	 	 declare function local:generate-sector-output-coefs($inputNameQueue as xs:string*, $currTree as node(), $coefs as node()*, $is_usa as xs:boolean) as node()* {
+                 if(empty($inputNameQueue)) then $coefs
+                 else if( exists($coefs[@name = $inputNameQueue[1]]) or exists(index-of(('unconventional oil production', "electricity", "cement", "N fertilizer"),
+$inputNameQueue[1])) or not($currTree/*[@type='sector' and @name=$inputNameQueue[1]]))
+then 
+local:generate-sector-output-coefs(remove($inputNameQueue, 1), $currTree, $coefs, $is_usa)
+	       				else
+                    let $inputName := $inputNameQueue[1],
+                        $newInputNameQueue := remove($inputNameQueue, 1),
+                        $useInputs := $currTree//*[@type='input' and @name=$inputName],
+                        $useSectors := distinct-values($useInputs/ancestor::*[@type='sector']/@name),
+                        $totalInputSum := for $vintage in distinct-values($useInputs/demand-physical/@vintage)
+                                          return element input {
+                                                     attribute vintage { $vintage },
+                                                     text {
+                                                         sum($useInputs/demand-physical[@vintage=$vintage])
+                                                     }
+                                                 },
+                       $new_coefs := if(empty($useSectors)) then
+                                         $coefs
+                                     else
+                                         $coefs | element sector {
+                                            attribute name { $inputName },
+                                            for $output in $useSectors
+                                            return element output {
+                                                       attribute name { $output },
+                                                       for $inputSum in $totalInputSum
+                                                       let $outputSum := sum($useInputs[ancestor::*[@type='sector' and @name=$output]]/demand-physical[@vintage=$inputSum/@vintage])
+                                                       return element coef {
+                                                                  attribute vintage { $inputSum/@vintage },
+                                                                  text { $outputSum div $inputSum }
+                                                              }
+                                                    }
+                                        }
+                        return 
+                              local:generate-sector-output-coefs(distinct-values(($newInputNameQueue, $useSectors)), $currTree, $new_coefs, $is_usa)
+		};
+        declare function local:apply-coefs($outputName as xs:string, $emissions as node()*, $coefs as node()*) as node()* {
+            if(exists($coefs[@name=$outputName]) and abs(sum($emissions)) &gt; 0.001) then
+                for $output in $coefs[@name=$outputName]/output
+                return local:apply-coefs($output/@name,
+                    for $year in distinct-values($emissions/@year)
+                    let $emissThisVintage := $emissions[@year=$year],
+                        $firstEmiss := $emissThisVintage[1],
+                        $emissSum := sum($emissThisVintage),
+                        $coefThisVintage := $output/coef[@vintage=$year]
+                    where $coefThisVintage &gt; 0
+                    return element { local-name($firstEmiss) } {
+                            $firstEmiss/@*,
+                            text{ $emissSum * $coefThisVintage }
+                        }
+	       			, $coefs)
+            else if( abs(sum($emissions)) &gt; 0.001) then
+                element sector {
+                    attribute name { $outputName },
+                    attribute type { 'sector' },
+                    (: $emissions :) (: TODO: not sure why this doesn't work and we need to create these explicitly :)
+                    for $e in $emissions
+                    return element emissions { $e/@*, text{ $e/text() } }
+                }
+            else
+                (: These are the residuals from chasing simulenaties, I've left this here
+                   for debuging purposes :)
+                element sector {
+                    attribute name { $outputName },
+                    attribute type { 'sector' }(:,
+                    $emissions:)
+                }
+        };
+		declare function local:run-emiss-by-enduse($scenarios as xs:string*, $regions as xs:string*, $collection as xs:string) as node()* { 	
+			 	 unordered { 	
+			 	 let $regionsG := if(not($regions[1] = 'Global'))
+			 	 		  then $regions
+			 	 		  else distinct-values(collection($collection)/scenario/world/*[@type='region']/@name)
+			 	 return
+			 	 for $scenario in $scenarios, 	    
+			 	 $region in $regionsG 	
+			 	 let $scenario_split := tokenize($scenario, ' '), 	    
+				 $currTree := collection($collection)/scenario[@name = $scenario_split[1] and @date = $scenario_split[2]]/world/*[@type='region' and @name=$region],
+                 $currEmissSectors := $currTree/*[@type='sector' and descendant::CO2],
+                 $coefs := local:generate-sector-output-coefs(distinct-values($currEmissSectors/@name), $currTree, (), false())
+				 return
+				    for $sectorName in distinct-values($currEmissSectors/@name)
+                    return local:append-heirarchy($currTree, local:apply-coefs($sectorName, $currEmissSectors[@name=$sectorName]//CO2/emissions, $coefs))//text()
+			 	 } 
+	 	 };
+		 local:run-emiss-by-enduse((:scenarios:), (:regions:), (:collection:))
+               </xPath>
+         <comments/>
+         <labelRewriteList append-values="false">
+            <level name="sector">
+               <rewrite from="N fertilizer" to="industry"/>
+               <rewrite from="unconventional oil production" to="industry"/>
+               <rewrite from="comm cooling" to="buildings"/>
+               <rewrite from="comm heating" to="buildings"/>
+               <rewrite from="comm others" to="buildings"/>
+               <rewrite from="resid cooling" to="buildings"/>
+               <rewrite from="resid heating" to="buildings"/>
+               <rewrite from="resid others" to="buildings"/>
+               <rewrite to="transportation" from="trn_aviation_intl"/>
+               <rewrite to="transportation" from="trn_freight"/>
+               <rewrite to="transportation" from="trn_freight_road"/>
+               <rewrite to="transportation" from="trn_pass_road"/>
+               <rewrite to="transportation" from="trn_pass_road_bus"/>
+               <rewrite to="transportation" from="trn_pass_road_LDV"/>
+               <rewrite to="transportation" from="trn_pass_road_LDV_4W"/>
+               <rewrite to="transportation" from="trn_pass_road_LDV_2W"/>
+               <rewrite to="transportation" from="trn_passenger"/>
+               <rewrite to="transportation" from="trn_pass"/>
+               <rewrite to="transportation" from="trn_shipping_intl"/>
+           </level>
+       </labelRewriteList>
+      </supplyDemandQuery>
+<!--   </aQuery> -->
+
+<!--      <aQuery>
+	<all-regions/> -->
+	<emissionsQueryBuilder title="CO2 emissions by region">
+      	  <axis1 name="region">region</axis1>
+      	  <axis2 name="Year">emissions</axis2>
+      	  <xPath buildList="true" dataName="emissions" group="false" sumAll="false">*[@type = 'sector' (:collapse:)]//*[@type = 'GHG' and ((@name='CO2') )]/emissions/node()</xPath>
+      	  <comments/>
+	</emissionsQueryBuilder> 
+<!--      </aQuery>    -->
+
+<!-- <aQuery>
+     <all-regions/> -->
+      <supplyDemandQuery title="Regional energy costs">
+          <axis1 name="sector">sector</axis1>
+          <axis2 name="Year">cost</axis2>
+          <xPath buildList="true" dataName="cost" group="false" sumAll="false">*[@type = 'sector' and ((@name='regional oil' or @name='regional natural gas' or @name='regional coal' or @name='regional biomass' or @name='nuclearFuelGenIII' or @name='electricity'))]/cost/text()</xPath>
+          <comments/>
+      </supplyDemandQuery>
+<!--   </aQuery> -->
+
+<!--      
+   <aQuery>
+      <region name="USA" />
+       <region name="Canada" />
+       <region name="Western Europe" />
+       <region name="Japan" />
+       <region name="Australia_NZ" />
+       <region name="Former Soviet Union" />
+       <region name="China" />
+       <region name="Middle East" />
+       <region name="Africa" />
+       <region name="Latin America" />
+       <region name="Southeast Asia" />
+       <region name="Eastern Europe" />
+       <region name="Korea" />
+       <region name="India" />
+       <region name="Africa_Eastern" />
+       <region name="Africa_Northern" />
+       <region name="Africa_Southern" />
+       <region name="Africa_Western" />
+       <region name="Brazil" />
+       <region name="Central America and Caribbean" />
+       <region name="Central Asia" />
+       <region name="EU-12" />
+       <region name="EU-15" />
+       <region name="Europe_Eastern" />
+       <region name="Europe_Non_EU" />
+       <region name="European Free Trade Association" />
+       <region name="Indonesia" />
+       <region name="Mexico" />
+       <region name="Pakistan" />
+       <region name="Russia" />
+       <region name="South Africa" />
+       <region name="South America_Northern" />
+       <region name="South America_Southern" />
+       <region name="Argentina" />
+       <region name="Colombia" />
+       <region name="South Asia" />
+       <region name="South Korea" />
+       <region name="Taiwan" />  -->
+       <supplyDemandQuery title="Regional oil production by fuel">
+           <axis1 name="fuel">technology</axis1>
+           <axis2 name="Year">physical-output[@vintage]</axis2>
+           <xPath buildList="true" dataName="output" group="false" sumAll="false">*[@type = 'sector' (:collapse:) and @name='regional oil']//*[@type = 'technology']/*[@type='output' (:collapse:)]/physical-output/node()</xPath>
+           <comments/>
+       </supplyDemandQuery>
+<!--   </aQuery> -->
+
+      
+      </queryGroup>
+</queries>

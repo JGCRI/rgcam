@@ -1,0 +1,14 @@
+<ModelInterfaceBatch>
+    <class name="ModelInterface.ModelGUI2.DbViewer">
+        <command name="XMLDB Batch File">
+            <scenario name="[SCENARIO]"/>
+            <queryFile>[QUERYFILE]</queryFile>
+            <outFile>[OUTFILE]</outFile>
+            <xmldbLocation>[DBFILE]</xmldbLocation>
+            <batchQueryResultsInDifferentSheets>false</batchQueryResultsInDifferentSheets>
+            <batchQueryIncludeCharts>false</batchQueryIncludeCharts>
+            <batchQuerySplitRunsInDifferentSheets>false</batchQuerySplitRunsInDifferentSheets>
+            <batchQueryReplaceResults>true</batchQueryReplaceResults>
+        </command>
+    </class>
+</ModelInterfaceBatch>

@@ -5,7 +5,7 @@
 \title{Add a scenario from a GCAM output database to a project data set}
 \usage{
 addScenario(dbFile, projFile, scenario, queryFile = NULL, clobber = FALSE,
-  mijar = "~/ModelInterface/ModelInterface.jar")
+  mijar = NULL)
 }
 \arguments{
 \item{dbFile}{GCAM database to extract scenario from.}
@@ -21,7 +21,8 @@ scenario in the GCAM database.}
 \item{clobber}{If \code{TRUE}, overwrite any existing scenario of the same
 name; otherwise, fail if \code{scenario} already exists in the data set.}
 
-\item{mijar}{Java jar file for the GCAM Model Interface.}
+\item{miclasspath}{Java class path for the GCAM Model Interface.  If
+\code{NULL}, use a bult-in default.}
 }
 \value{
 The project dataset with the new scenario added.

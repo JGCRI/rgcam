@@ -1,0 +1,13 @@
+<ModelInterfaceBatch>
+    <class name="ModelInterface.ModelGUI2.DbViewer">
+        <command name="XMLDB Batch File">
+            <queryFile>./sample-queries.xml</queryFile>
+            <outFile>./sample.csv</outFile>
+            <xmldbLocation>../extdata/sample_basexdb</xmldbLocation>
+            <batchQueryResultsInDifferentSheets>false</batchQueryResultsInDifferentSheets>
+            <batchQueryIncludeCharts>false</batchQueryIncludeCharts>
+            <batchQuerySplitRunsInDifferentSheets>false</batchQuerySplitRunsInDifferentSheets>
+            <batchQueryReplaceResults>true</batchQueryReplaceResults>
+        </command>
+    </class>
+</ModelInterfaceBatch>

@@ -31,13 +31,13 @@
 #' \code{NULL}, use a default query file containing commonly used queries.
 #' @param clobber If \code{TRUE}, overwrite any existing scenario of the same
 #' name; otherwise, fail if \code{scenario} already exists in the data set.
-#' @param mijar Java jar file for the GCAM Model Interface.
+#' @param miclasspath Java class path for the GCAM Model Interface.  If
+#' \code{NULL}, use a bult-in default.
 #' @return The project dataset with the new scenario added.
 #' @importFrom dplyr %>%
 #' @export
 addScenario <- function(dbFile, projFile, scenario, queryFile=NULL,
-                        clobber=FALSE,
-                        mijar='~/ModelInterface/ModelInterface.jar') {
+                        clobber=FALSE, mijar=NULL) {
     prjdata <- load(projFile)
     scen <- sep.date(scenario)          # list(scenario=..., date=...)
     if(!clobber && scen$scenario %in% names(prjdata)) {
@@ -139,19 +139,24 @@ sep.date <- function(scenstr) {
 #' the last one in the database.
 #' @param queryFile Name of the file containing the queries.  If \code{NULL},
 #' then use the built-in default.
+#' @param miclasspath Classpath for the GCAM model interface.  If \code{NULL},
+#' then use the built-in default.
 runModelInterface <- function(dbFile, scenario=NULL, queryFile=NULL,
-                              mijar='~/ModelInterface/ModelInterface.jar') {
+                              miclasspath=NULL) {
 
     ## XXX Someday, when we have more time we should replace all of this with
     ## code that invokes the Model Interface functionality directly using
     ## rjava.
 
-    if(is.null(queryFile)) {
-        queryFile <- system.file('extdata','default-query.xml',
-                                 package='GCAMdashboard')
+    if(is.null(miclasspath)) {
+        miclasspath <- DEFAULT.MICLASSPATH
     }
 
-    batch <- prototype.batch            # XML file with placeholders for us to
+    if(is.null(queryFile)) {
+        queryFile <- SAMPLE.QUERIES
+    }
+
+    batch <- PROTOTYPE.MIBATCH          # XML file with placeholders for us to
                                         # fill in
     if(is.null(scenario)) {
         batch <- batch[grep('\\[SCENARIO\\]', batch, invert=TRUE)] # drop the
@@ -167,7 +172,8 @@ runModelInterface <- function(dbFile, scenario=NULL, queryFile=NULL,
     batchfile <- tempfile(fileext='.xml')
     write(batch, file=batchfile)
 
-    system2('java', c('-jar', mijar, '-b', batchfile))
+    system2("java", c("-cp", miclasspath, "ModelInterface/InterfaceMain", "-b",
+                      batchfile))
     outfile
 }
 
@@ -179,3 +185,43 @@ runModelInterface <- function(dbFile, scenario=NULL, queryFile=NULL,
 table.scen.trim <- function(tbl) {
     dplyr::mutate(tbl, scenario=sep.date(scenario)$scenario)
 }
+
+
+#' Default java class path for running the Model Interface
+#'
+#' This is the class path you get if you pass \code{NULL} to any of the
+#' functions that run (directly or indirectly) the model interface.  The
+#' necessary jar files are bundled with the package, so unless you need a
+#' customized version of the model interface for some reason, this should take
+#' care of all your GCAM query needs.
+DEFAULT.MICLASSPATH <- paste0(system.file("ModelInterface", "jars",
+                                          package="GCAMdashboard"),"/\\*:",
+                              system.file("ModelInterface",
+                                          "ModelInterface.jar",
+                                          package="GCAMdashboard"))
+
+#' Sample GCAM database file.
+#'
+#' This file can be used for testing the mechanics of running GCAM queries using
+#' the functions in this package.  A lot of the data normally included in the
+#' database has been stripped out to control the total size, so a lot of queries
+#' won't work properly.  The \code{\link{SAMPLE.QUERIES}} should all work.
+SAMPLE.GCAMDB <- system.file("extdata","sample_basexdb",
+                             package="GCAMdashboard")
+
+#' Sample GCAM query file
+#'
+#' These queries should work with the sample data in
+#' \code{\link{SAMPLE.GCAMDB}}.
+SAMPLE.QUERIES <- system.file("ModelInterface", "sample-queries.xml",
+                              package="GCAMdashboard")
+
+#' Prototype Model Interface batch file
+#'
+#' This is a prototype for the batch file that drives the Model Interface.  It
+#' has a bunch of tags like [SCENARIO], [DBFILE], etc. for
+#' \code{\link{runModelInterface}} to fill in with the particulars of the
+#' queries we are trying to run.
+PROTOTYPE.MIBATCH <- readLines(system.file("ModelInterface",
+                                           "batch-prototype.xml",
+                                           package="GCAMdashboard"))

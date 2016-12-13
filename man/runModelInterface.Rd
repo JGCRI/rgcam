@@ -5,7 +5,7 @@
 \title{Run the GCAM Model Interface with results placed into a temporary file.}
 \usage{
 runModelInterface(dbFile, scenario = NULL, queryFile = NULL,
-  mijar = "~/ModelInterface/ModelInterface.jar")
+  miclasspath = NULL)
 }
 \arguments{
 \item{dbFile}{The GCAM output database to run queries on.}
@@ -14,6 +14,9 @@ runModelInterface(dbFile, scenario = NULL, queryFile = NULL,
 the last one in the database.}
 
 \item{queryFile}{Name of the file containing the queries.  If \code{NULL},
+then use the built-in default.}
+
+\item{miclasspath}{Classpath for the GCAM model interface.  If \code{NULL},
 then use the built-in default.}
 }
 \description{
