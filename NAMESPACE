@@ -3,4 +3,5 @@
 export(addScenario)
 export(listQueries)
 export(listScenarios)
+export(loadProject)
 importFrom(dplyr,"%>%")

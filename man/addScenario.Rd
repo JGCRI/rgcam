@@ -4,13 +4,14 @@
 \alias{addScenario}
 \title{Add a scenario from a GCAM output database to a project data set}
 \usage{
-addScenario(dbFile, projFile, scenario, queryFile = NULL, clobber = FALSE,
-  mijar = NULL)
+addScenario(dbFile, projFile, scenario = NULL, queryFile = NULL,
+  clobber = FALSE, mijar = NULL)
 }
 \arguments{
 \item{dbFile}{GCAM database to extract scenario from.}
 
-\item{projFile}{Project file to add extracted results to.}
+\item{projFile}{Project file to add extracted results to.  The file will be
+created if it doesn't already exist.}
 
 \item{scenario}{Name of scenario to extract.  If \code{NULL}, use the last
 scenario in the GCAM database.}
@@ -32,7 +33,9 @@ This function will run the GCAM Model Interface to extract the query data for
 a scenario in a GCAM output database.  The query data is added to a project
 data file.  You can optionally specify an XML file of queries to run;
 otherwise, the built-in default queries will be run.  The resulting data file
-will be suitable for loading into the dashboard's user interface.
+will be suitable for loading into the dashboard's user interface.  It is not
+necessary, or even helpful, to load a project file before adding a scenario
+to it.
 }
 \details{
 The scenario being added to the project data set is not checked to verify
