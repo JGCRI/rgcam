@@ -89,7 +89,7 @@ addScenario <- function(dbFile, projFile, scenario=NULL, queryFile=NULL,
     }
 
     outFile <- runModelInterface(dbFile, scenario, queryFile, mijar)
-    tables <- gcammaptools::parse_mi_output(outFile)
+    tables <- parse_mi_tables(outFile)
     if(length(tables) == 0) {
         stop('Queries returned no data.')
     }
@@ -208,6 +208,100 @@ runModelInterface <- function(dbFile, scenario=NULL, queryFile=NULL,
     outfile
 }
 
+#' Parse the GCAM ModelInterface output
+#'
+#' Parse the raw output of a GCAM batch query into a set of tables.
+#'
+#' @param fn Name of the file containing the output from the GCAM Model Interface.
+parse_mi_tables <- function(fn) {
+    ## transplanted from the gcammaptools package.
+    tables <- list()
+
+    # See if the user has provided any values overriding our defaults
+    use_tablenames <- TRUE
+    headerline <- "scenario"
+    yearpat <- "X[0-9]{4}"
+
+    ## The original version of this function had a bunch of logging commands.
+    ## I've disabled these because I didn't want to bring the logging functions
+    ## along, but I've left the commented logging commands in place in case we
+    ## need them for debugging in the future.
+    ##printlog("Reading", fn, "...", cr = F, level = LOGLEVEL_SUMMARY)
+    tryCatch({
+        fdata <- scan(fn, what = character(), sep = "\n", blank.lines.skip = F, quiet = T)
+    }, error = function(err) {
+        stop(paste('error reading file', as.character(err)))
+    })
+
+    ##printlog("OK.", ts = F)
+    tableheaders <- grep(headerline, fdata)
+    ##printlog("Table headers located in lines", tableheaders)
+    table_name <- NA
+
+    for (i in seq_along(tableheaders)) {
+        if (use_tablenames) {
+            table_name <- fdata[tableheaders[i] - 1]
+        } else {
+            table_name <- i
+        }
+        ##printlog("Table", i, "name is", table_name)
+
+        nskip <- tableheaders[i] - 1
+        headers <- fdata[tableheaders[i]]
+        extrafields <- 0
+        while (substr(headers, nchar(headers), nchar(headers)) == ",") {
+            headers <- substr(headers, 1, nchar(headers) - 1)
+            extrafields <- extrafields + 1
+        }
+
+        if (i == length(tableheaders)) {
+            nrows <- -1
+        } else {
+            nrows <- tableheaders[i + 1] - tableheaders[i] - 1 - use_tablenames  # i.e., subtract 1 is using table names
+        }
+
+        ##printlog("Reading table", i, "in", fn, "( skip =", nskip, " nrows =", nrows, ")")
+        tempdata <- read.table(fn, row.names = NULL, skip = nskip, nrows = nrows, header = T,
+                               sep = ",", comment.char = '#', stringsAsFactors = F)
+
+        # Remove extra columns on end - this is often present in the MI output
+        if (extrafields > 0) {
+            ##printlog("Removing", extrafields, "extra fields")
+            tempdata <- tempdata[-seq(ncol(tempdata) - extrafields + 1, ncol(tempdata))]
+        }
+
+        ##printlog("Table", i, "name is", table_name)
+
+        # Get rid of 'X' in year names names(tempdata)<-ifelse(grepl('(X2)|(X1)', names(tempdata)),
+        # sub('X','',names(tempdata)), names(tempdata))
+
+        tables[[table_name]] <- tempdata
+    }
+
+    tables
+}  # parse_mi_tables
+
+#' Parse the GCAM ModelInterface output (DEPRECATED)
+#'
+#' Parse the raw output of a GCAM batch query into a set of tables.
+#' Normally you will pass the structure returned by this function to
+#' \code{process_batch_q} extract (and optionally do some filtering
+#' and processing on) the table you are looking for.
+#'
+#' This function is obsolete and is included only for backward compatibility
+#' with old code that uses it.  Instead, use \code{\link{addScenario}} to
+#' process GCAM data into a native structure.
+#'
+#' @param fn Name of the file containing the output from the GCAM Model
+#' Interface.
+#' @export
+parse_mi_output <- function(fn) {
+    .Deprecated('addScenario','rgcam',
+                'This function will be removed in a future release.  Consider importing your data with addScenario instead.')
+    parse_mi_tables(fn)
+}
+
+
 #' Trim the 'date=' from the scenario column in a table
 #'
 #' Return a version of a GCAM results table in which the scenario name contains
@@ -216,7 +310,6 @@ runModelInterface <- function(dbFile, scenario=NULL, queryFile=NULL,
 table.scen.trim <- function(tbl) {
     dplyr::mutate(tbl, scenario=sep.date(scenario)[['scenario']])
 }
-
 
 #' Default java class path for running the Model Interface
 #'
