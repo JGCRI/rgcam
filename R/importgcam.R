@@ -57,6 +57,8 @@
 #' @export
 addScenario <- function(dbFile, projFile, scenario=NULL, queryFile=NULL,
                         clobber=FALSE, mijar=NULL, transformations=NULL) {
+
+    projFile <- normalizePath(projFile)
     if(file.exists(projFile)) {
         if(file.access(projFile, mode=6)!=0) { # 6 == read and write permission
             ## file.access returns 0 on success
@@ -64,10 +66,11 @@ addScenario <- function(dbFile, projFile, scenario=NULL, queryFile=NULL,
                          "exists but lacks either read or write permission.")
             stop(msg)
         }
-        loadProject(projFile)
+        prjdata <- loadProject(projFile)
     }
     else {
         prjdata <- list()
+        attr(prjdata, 'file') <- projFile
     }
 
     if(!is.null(scenario)) {

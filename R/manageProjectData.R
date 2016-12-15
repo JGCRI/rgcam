@@ -44,6 +44,16 @@ loadProject <- function(projFile) {
                    projFile,".  Validation failed at step", stat))
     }
 
+    ## Check the file name stored in the data.
+    if(is.null(attr(prjdata,"file")) || attr(prjdata, "file") != projFile) {
+        ## This generally means that the file has been moved or renamed
+        ## since it was written.  Notify the user, but it's not an error.
+        message("Project file name (",
+                projFile,") does not match the name recorded in the data (",
+                attr(prjdata,'file'), ").  Updating to match new file name.")
+        attr(prjdata, 'file') <- projFile
+    }
+
     prjdata
 }
 
