@@ -52,14 +52,18 @@
 #' \code{NULL}, use a bult-in default.
 #' @param transformations Transformation functions to apply to the queries (see
 #' details).
+#' @param migabble Control what happens to the model interface console output.
+#' This is passed to the stdout/stderr argument of \code{system2}.  Default is
+#' to discard.
 #' @return The project dataset with the new scenario added.
 #' @importFrom dplyr %>%
 #' @export
 addScenario <- function(dbFile, projFile, scenario=NULL, queryFile=NULL,
-                        clobber=FALSE, mijar=NULL, transformations=NULL) {
+                        clobber=FALSE, miclasspath=NULL, transformations=NULL,
+                        migabble=NULL) {
 
-    projFile <- normalizePath(projFile)
     if(file.exists(projFile)) {
+        projFile <- normalizePath(projFile)
         if(file.access(projFile, mode=6)!=0) { # 6 == read and write permission
             ## file.access returns 0 on success
             msg <- paste("File", projFile,
@@ -70,6 +74,8 @@ addScenario <- function(dbFile, projFile, scenario=NULL, queryFile=NULL,
     }
     else {
         prjdata <- list()
+        save(prjdata, file=projFile)    # have to create file to use normalizePath
+        projFile <- normalizePath(projFile)
         attr(prjdata, 'file') <- projFile
     }
 
@@ -84,11 +90,11 @@ addScenario <- function(dbFile, projFile, scenario=NULL, queryFile=NULL,
             msg <- paste('Scenario', scen$scenario,
                          'already exists in the data set, and clobber=FALSE. Aborting.')
             message(msg)
-            return
+            return(NULL)
         }
     }
 
-    outFile <- runModelInterface(dbFile, scenario, queryFile, mijar)
+    outFile <- runModelInterface(dbFile, scenario, queryFile, miclasspath, migabble)
     tables <- parse_mi_tables(outFile)
     if(length(tables) == 0) {
         stop('Queries returned no data.')
@@ -106,7 +112,7 @@ addScenario <- function(dbFile, projFile, scenario=NULL, queryFile=NULL,
             msg <- paste('Scenario', scen$scenario,
                          'already exists in the data set, and clobber=FALSE. Aborting.')
             message(msg)
-            return
+            return(NULL)
         }
     }
 
@@ -172,8 +178,9 @@ sep.date <- function(scenstr) {
 #' then use the built-in default.
 #' @param miclasspath Classpath for the GCAM model interface.  If \code{NULL},
 #' then use the built-in default.
+#' @param migabble Control what happens to Model Interface console output.
 runModelInterface <- function(dbFile, scenario=NULL, queryFile=NULL,
-                              miclasspath=NULL) {
+                              miclasspath=NULL, migabble=NULL) {
 
     ## XXX Someday, when we have more time we should replace all of this with
     ## code that invokes the Model Interface functionality directly using
@@ -204,7 +211,7 @@ runModelInterface <- function(dbFile, scenario=NULL, queryFile=NULL,
     write(batch, file=batchfile)
 
     system2("java", c("-cp", miclasspath, "ModelInterface/InterfaceMain", "-b",
-                      batchfile))
+                      batchfile), stdout=migabble)
     outfile
 }
 
@@ -302,11 +309,11 @@ parse_mi_output <- function(fn) {
 }
 
 
-#' Trim the 'date=' from the scenario column in a table
-#'
-#' Return a version of a GCAM results table in which the scenario name contains
-#' just the name of the scenario, without the date information that is typically
-#' packed into that column.
+## Trim the 'date=' from the scenario column in a table
+##
+## Return a version of a GCAM results table in which the scenario name contains
+## just the name of the scenario, without the date information that is typically
+## packed into that column.
 table.scen.trim <- function(tbl) {
     dplyr::mutate(tbl, scenario=sep.date(scenario)[['scenario']])
 }

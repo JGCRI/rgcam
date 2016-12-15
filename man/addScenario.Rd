@@ -5,7 +5,8 @@
 \title{Add a scenario from a GCAM output database to a project data set}
 \usage{
 addScenario(dbFile, projFile, scenario = NULL, queryFile = NULL,
-  clobber = FALSE, mijar = NULL, transformations = NULL)
+  clobber = FALSE, miclasspath = NULL, transformations = NULL,
+  migabble = NULL)
 }
 \arguments{
 \item{dbFile}{GCAM database to extract scenario from.}
@@ -22,11 +23,15 @@ scenario in the GCAM database.}
 \item{clobber}{If \code{TRUE}, overwrite any existing scenario of the same
 name; otherwise, fail if \code{scenario} already exists in the data set.}
 
+\item{miclasspath}{Java class path for the GCAM Model Interface.  If
+\code{NULL}, use a bult-in default.}
+
 \item{transformations}{Transformation functions to apply to the queries (see
 details).}
 
-\item{miclasspath}{Java class path for the GCAM Model Interface.  If
-\code{NULL}, use a bult-in default.}
+\item{migabble}{Control what happens to the model interface console output.
+This is passed to the stdout/stderr argument of \code{system2}.  Default is
+to discard.}
 }
 \value{
 The project dataset with the new scenario added.

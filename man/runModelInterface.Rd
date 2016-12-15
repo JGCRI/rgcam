@@ -5,7 +5,7 @@
 \title{Run the GCAM Model Interface with results placed into a temporary file.}
 \usage{
 runModelInterface(dbFile, scenario = NULL, queryFile = NULL,
-  miclasspath = NULL)
+  miclasspath = NULL, migabble = NULL)
 }
 \arguments{
 \item{dbFile}{The GCAM output database to run queries on.}
@@ -18,6 +18,8 @@ then use the built-in default.}
 
 \item{miclasspath}{Classpath for the GCAM model interface.  If \code{NULL},
 then use the built-in default.}
+
+\item{migabble}{Control what happens to Model Interface console output.}
 }
 \description{
 This function will run the Model Interface on the selected GCAM output

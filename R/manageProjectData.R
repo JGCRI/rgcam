@@ -97,7 +97,7 @@ listQueries <- function(projData, scenario) {
     }
     else {
         msg <- paste("Scenario", scenario, "is not in this data set.")
-        warn(msg)
+        warning(msg)
         NULL
     }
 }
