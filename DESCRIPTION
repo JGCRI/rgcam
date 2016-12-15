@@ -1,12 +1,16 @@
-Package: GCAMdashboard
-Title: Explore GCAM Scenarios in an Interactive Dashboard
+Package: rgcam
+Title: Tools for importing and working with GCAM results
 Version: 0.0.1
-Authors@R: person("Robert", "Link", email = "robert.link@pnnl.gov", role = c("aut", "cre"))
-Description: The GCAM dashboard is an interactive tool for exploring collections
-    of GCAM scenarios. Its purpose is not to show everything a user might want to
-    know about a scenario, but rather to allow users to quickly get a sense of the
-    key features of a scenario and how a group of related scenarios are similar to
-    and different from one another.
+Authors@R: person("Robert", "Link", email = "robert.link@pnnl.gov", role = c("aut", "cre")) 
+Description: This package provides tools for extracting data from GCAM
+    output databases and importing that data into R for analysis.  The
+    central concept in rgcam is the "project data file", which
+    contains an R representation of the GCAM data.  The package
+    provides functions to add results from GCAM queries to a project
+    file, load data, and perform maintenance on project data (such as
+    cleaning out unneeded scenarios).  The data structures created and
+    loaded by this package are compatible with the GCAM analysis tools
+    written and supported by the GCAM team. 
 Depends:
     R (>= 3.2.3)
 License: GPL-2
