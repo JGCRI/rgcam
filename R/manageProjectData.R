@@ -102,6 +102,27 @@ listQueries <- function(projData, scenario) {
     }
 }
 
+
+#' Retrieve a query for one or more scenarios
+#'
+#' Return a data frame with the results for a query for all of the selected
+#' scenarios.
+#'
+#' @param projData The data set to extract from.
+#' @param query The name of the query to extract.
+#' @param scenarios Vector of scenario names.  If NULL, use all scenarios in the
+#' data set.
+#' @export
+getQuery <- function(projData, query, scenarios=NULL) {
+    if(is.null(scenarios)) {
+        scenarios <- listScenarios(projData)
+    }
+
+    queries <- lapply(scenarios, function(s) {projData[[s]][[query]]})
+
+    do.call(rbind, queries)
+}
+
 #' Check whether a project data structure is valid.
 #'
 #' This function will check the 7 conditions described in

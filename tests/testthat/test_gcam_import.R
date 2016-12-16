@@ -82,6 +82,36 @@ test_that('validation functions accurately detect problems.', {
               expect_equal(project.valid('baz'), 1)
           })
 
+test_that('query retrieval works.', {
+              prj <- loadProject(file.valid)
+
+              ## add a second scenario
+              clone_query <- function(q) {dplyr::mutate(q,scenario='Scenario2')}
+              prj[['Scenario2']] <- lapply(prj[[1]], clone_query)
+
+              co2 <- getQuery(prj, 'CO2 concentrations')
+              expect_true(is.data.frame(co2))
+              expect_equal(nrow(co2), 2)
+              expect_equal(co2$scenario, c('Reference-filtered', 'Scenario2'))
+              expect_equal(co2$X2100, rep(738.939,2))
+
+              ## single scenario query
+              co2.single <- getQuery(prj, 'CO2 concentrations', 'Scenario2')
+              expect_true(is.data.frame(co2))
+              expect_equal(nrow(co2.single), 1)
+              expect_equal(co2.single$scenario, 'Scenario2')
+              expect_equal(co2.single$X2050, 507.433)
+
+              ## add a query to the second scenario that doesn't exist in the
+              ## first.
+              prj[['Scenario2']][['foo']] <-
+                  prj[['Scenario2']][['CO2 concentrations']]
+              foo <- getQuery(prj, 'foo') # all scenarios
+              expect_true(is.data.frame(foo))
+              expect_equal(nrow(foo), 1)
+              expect_equal(foo$scenario, 'Scenario2')
+              expect_equal(foo$X2000, 364.147)
+          })
 
 ### Cleanup
 unlink(file.valid)
