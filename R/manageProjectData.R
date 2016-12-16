@@ -35,13 +35,13 @@ loadProject <- function(projFile) {
         message(paste("File", projFile,
                       "does not contain valid project data."))
         message("Try loading the file into an R session and verify that it contains the variable 'prjdata'.")
-        stop(paste("Unable to load project file", projFile))
+        stop("Unable to load project file ", projFile)
     }
 
     stat <- project.valid(prjdata)
     if(stat != 0) {
-        stop(paste("Invalid project data in",
-                   projFile,".  Validation failed at step", stat))
+        stop("Invalid project data in ",
+                   projFile,".  Validation failed at step", stat)
     }
 
     ## Check the file name stored in the data.
@@ -71,7 +71,7 @@ saveProject <- function(prjdata) {
     ## validate data first
     stat <- project.valid(prjdata)
     if(stat != 0) {
-        stop(paste('saveProject:  invalid project data object, stat=', stat))
+        stop("saveProject:  invalid project data object, stat=", stat)
     }
     projFile <- attr(prjdata, 'file')
     save(prjdata, file=projFile)
@@ -150,15 +150,14 @@ dropScenarios <- function(proj, scenarios, invert=FALSE, writeback=is.character(
 #' @export
 listQueries <- function(projData, scenario) {
     if(is.character(projData)) {
-        stop('This function requires the data set to have been already loaded.')
+        stop("This function requires the data set to have been already loaded.")
     }
 
     if(scenario %in% names(projData)) {
         names(projData[[scenario]])
     }
     else {
-        msg <- paste("Scenario", scenario, "is not in this data set.")
-        warning(msg)
+        warning("Scenario ", scenario, " is not in this data set.")
         NULL
     }
 }
