@@ -8,7 +8,10 @@ notdata <- list()
 save(notdata, file=file.bad)
 
 ## helper function for creating extra scenarios
-clone_query <- function(q) {dplyr::mutate(q,scenario='Scenario2')}
+dup.scenario <- function(scen, newname) {
+    clone.query <- function(q) {dplyr::mutate(q,scenario=newname)}
+    lapply(scen, clone.query)
+}
 
 
 test_that('Data can be imported from GCAM database.', {
@@ -93,7 +96,7 @@ test_that('query retrieval works.', {
               prj <- loadProject(file.valid)
 
               ## add a second scenario
-              prj[['Scenario2']] <- lapply(prj[[1]], clone_query)
+              prj[['Scenario2']] <- dup.scenario(prj[[1]], 'Scenario2')
 
               co2 <- getQuery(prj, 'CO2 concentrations')
               expect_true(is.data.frame(co2))
@@ -119,11 +122,11 @@ test_that('query retrieval works.', {
               expect_equal(foo$X2000, 364.147)
           })
 
-## do this last, since it changes our temporary project data file.
+## This one modifies the temporary project file
 test_that('scenario can be added to an already-loaded data set.', {
               prj <- loadProject(file.valid)
               ## rename the scenario so we can load it again
-              prj[['Scenario2']] <- lapply(prj[[1]], clone_query)
+              prj[['Scenario2']] <- dup.scenario(prj[[1]], 'Scenario2')
               prj[[1]] <- NULL
               prj <- addScenario(SAMPLE.GCAMDB, prj)
 
@@ -132,6 +135,79 @@ test_that('scenario can be added to an already-loaded data set.', {
               expect_true('Scenario2' %in% listScenarios(prj))
           })
 
+## This one reverts the changes made in the previous test
+test_that('dropScenarios works in all option configurations.', {
+              prj2 <- loadProject(file.valid)
+              expect_equal(length(prj2),2)
+
+              ## This should drop the second scenario but leave the file
+              ## untouched.
+              prj1 <- dropScenarios(prj2, 'Scenario2')
+              expect_equal(length(prj1),1)
+              expect_equal(listScenarios(prj1), 'Reference-filtered')
+              prj2a <- loadProject(file.valid)
+              expect_equal(prj2a, prj2)
+
+              ## Test the invert option
+              prj1x <- dropScenarios(prj2a, 'Reference-filtered', invert=TRUE)
+              expect_equal(prj1x, prj1)
+              prj2b <- loadProject(file.valid)
+              expect_equal(prj2b, prj2)
+
+              ## This one should drop the scenario in the working copy and in
+              ## the file.
+              prj1a <- dropScenarios(file.valid, 'Scenario2')
+              expect_equal(prj1a, prj1)
+              prj1b <- loadProject(file.valid)
+              expect_equal(prj1b, prj1)
+
+          })
+
+test_that('dropQueries works in all (reasonable) option configurations.', {
+              prj <- loadProject(file.valid)
+              expect_equal(length(prj), 1) # mostly making sure we are starting
+                                        # from a known state
+
+              prj2 <- prj
+              prj2[['Scenario2']] <- dup.scenario(prj[[1]], 'Scenario')
+              ## drop one query from all scenarios
+              prj2 <- dropQueries(prj2, 'CO2 concentrations')
+              expect_equal(length(prj2[[1]]), length(prj2[[2]]))
+              expect_equal(length(prj2[[1]]), length(prj[[1]]) - 1)
+              expect_false('CO2 concentrations' %in% names(prj2[[1]]))
+              expect_false('CO2 concentrations' %in% names(prj2[[2]]))
+
+              ## drop another query from just Scenario 2 (which is the second
+              ## scenario in the list)
+              prj3 <- dropQueries(prj2, 'Land Allocation',
+                                  scenarios='Scenario2')
+              expect_equal(length(prj3[[1]]), length(prj3[[2]]) + 1)
+              expect_equal(length(prj3[[1]]), length(prj2[[1]]))
+              expect_true('Land Allocation' %in% names(prj3[[1]]))
+              expect_false('Land Allocation' %in% names(prj3[[2]]))
+
+              ## drop all but one query from the data
+              prj4 <- dropQueries(prj3, 'Climate forcing', invert=TRUE)
+              expect_equal(length(prj4[[1]]), 1)
+              expect_equal(length(prj4[[2]]), 1)
+              expect_equal(names(prj4[[1]]), 'Climate forcing')
+              expect_equal(names(prj4[[2]]), 'Climate forcing')
+
+              ## none of this should have changed the data file
+              prj1a <- loadProject(file.valid)
+              expect_equal(prj1a, prj)
+
+              ## delete two queries from the file
+              prj5 <- dropQueries(file.valid, c('GDP by region',
+                                                'Building floorspace'))
+              expect_equal(length(prj5[[1]]), length(prj[[1]]) - 2)
+              expect_false('Building floorspace' %in% names(prj5[[1]]))
+              prj5a <- loadProject(file.valid)
+              expect_equal(prj5, prj5a)
+
+              ## restore the temp file in case we have more tests.
+              saveProject(prj)
+          })
 
 ### Cleanup
 unlink(file.valid)

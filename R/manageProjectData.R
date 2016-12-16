@@ -57,6 +57,25 @@ loadProject <- function(projFile) {
     prjdata
 }
 
+#' Save project data to a backing file.
+#'
+#' Write a project data structure to its data file.  This should rarely be
+#' necessary, since most of the functions that modify a project file have an
+#' option to write the data back to the file.  Mostly it is intended for
+#' internal use, but it's exported in case it's useful to someone for some
+#' reason.
+#'
+#' @param prjdata Project data object.
+#' @export
+saveProject <- function(prjdata) {
+    ## validate data first
+    stat <- project.valid(prjdata)
+    if(stat != 0) {
+        stop(paste('saveProject:  invalid project data object, stat=', stat))
+    }
+    projFile <- attr(prjdata, 'file')
+    save(prjdata, file=projFile)
+}
 
 #' List the scenarios in a project data set
 #'
@@ -77,6 +96,48 @@ listScenarios <- function(projData) {
     names(pd)
 }
 
+#' Remove a scenario from a project data set
+#'
+#' This function removes one or more scenarios from a project data set and
+#' returns the newly modified data.  If this operation is performed on a file,
+#' the file is also modified.  If it is performed on a data set that has already
+#' been loaded, then the change is passed onto the file only if \code{writeback}
+#' is set to TRUE.
+#'
+#' Technically is is possible to pass a filename for \code{proj} with
+#' \code{writeback} set to \code{FALSE}.  This usage will cause the data set to
+#' be loaded and filtered without modifying the original, albeit in a somewhat
+#' nonintuitive way.
+#'
+#' @param proj Project data or data file name.
+#' @param scenarios Name(s) of the scenario(s) to drop
+#' @param invert If \code{TRUE} then delete all scenarios \emph{except} the ones
+#' given in \code{scenarios}.
+#' @param writeback If \code{TRUE} then write the change into the backing data
+#' file.
+#' @export
+dropScenarios <- function(proj, scenarios, invert=FALSE, writeback=is.character(proj)) {
+    writeback <- writeback              # magic!
+    if(is.character(proj)) {
+        proj <- loadProject(proj)
+    }
+    else {
+        proj <- proj
+    }
+
+    for(scen in listScenarios(proj)) {
+        if(invert && !(scen %in% scenarios) )
+            proj[[scen]] <- NULL
+        else if(!invert && scen %in% scenarios)
+            proj[[scen]] <- NULL
+    }
+
+    if(writeback) {
+        saveProject(proj)
+    }
+
+    proj
+}
 
 #' List the queries available for a scenario
 #'
@@ -121,6 +182,61 @@ getQuery <- function(projData, query, scenarios=NULL) {
     queries <- lapply(scenarios, function(s) {projData[[s]][[query]]})
 
     do.call(rbind, queries)
+}
+
+#' Drop specified queries from scenarios.
+#'
+#' This function removes the specified queries from a data set.  By default the
+#' queries are removed from every scenario they appear in, but the operation can
+#' be limited to certain scenarios if desired.  If the operation is performed on
+#' a file, the file is also modified.  If it is performed on a data set that has
+#' already been loaded, then the change is written back to the file only if
+#' \code{writeback} is set to TRUE.  Either way, the modified data set is
+#' returned.
+#'
+#' As with \code{\link{dropScenarios}}, it is possible and perhaps occasionally
+#' useful to specify a file but to force the file not to be updated by
+#' specifying \code{writeback=FALSE}.
+#'
+#' @param proj Project data or data file name.
+#' @param queries Name(s) of the queries to drop.
+#' @param invert If \code{TRUE} then delete all queries \emph{except} the ones
+#' in \code{queries}.
+#' @param writeback If \code{TRUE} then write the change to the backing data
+#' file.
+#' @param scenarios Drop the queries only from the specified scenarios (default
+#' is to drop from all scenarios).
+#' @param invertScenario Drop queries from the scenarios \emph{not} listed in
+#' \code{scenarios}.
+#' @export
+dropQueries <- function(proj, queries, invert=FALSE,
+                        writeback=is.character(proj), scenarios=NULL,
+                        invertScenario=FALSE) {
+    writeback <- writeback
+    if(is.character(proj)) {
+        proj <- loadProject(proj)
+    }
+
+    if(is.null(scenarios)) {
+        scenarios <- listScenarios(proj)
+    }
+    if(invertScenario) {
+        allscen <- listScenarios(proj)
+        scenarios <- allscen[! allscen %in% scenarios]
+    }
+
+    for(scen in scenarios) {
+        n <- names(proj[[scen]])
+        ## This line picks the queries to keep.  If invert==TRUE, then that's
+        ## the queries in the list; otherwise it's the ones not in the list.
+        proj[[scen]] <- proj[[scen]][(n %in% queries) == invert]
+    }
+
+    if(writeback) {
+        saveProject(proj)
+    }
+
+    proj
 }
 
 #' Check whether a project data structure is valid.
