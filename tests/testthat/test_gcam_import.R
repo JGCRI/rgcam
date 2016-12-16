@@ -7,6 +7,9 @@ file.bad <- tempfile()
 notdata <- list()
 save(notdata, file=file.bad)
 
+## helper function for creating extra scenarios
+clone_query <- function(q) {dplyr::mutate(q,scenario='Scenario2')}
+
 
 test_that('Data can be imported from GCAM database.', {
               prj <- addScenario(SAMPLE.GCAMDB, file.valid)
@@ -21,12 +24,15 @@ test_that('Data can be imported from GCAM database.', {
 test_that('Clobber argument to addScenario works.', {
               expect_message(prj <- addScenario(SAMPLE.GCAMDB, file.valid),
                              'clobber')
-              expect_null(prj)
-              prj <- addScenario(SAMPLE.GCAMDB, file.valid,
-                                 clobber=TRUE)
               attr(prj,'file') <- 'TEST'
               expect_equal_to_reference(prj, 'sample-prj.dat')
-         })
+
+              expect_silent(prj <- addScenario(SAMPLE.GCAMDB, file.valid,
+                                               clobber=TRUE))
+              attr(prj,'file') <- 'TEST'
+              expect_equal_to_reference(prj, 'sample-prj.dat')
+          })
+
 
 
 test_that('File with bad permissions is detected.', {
@@ -44,6 +50,7 @@ test_that('loadProject works.', {
               attr(prj,'file') <- 'TEST'
               expect_equal_to_reference(prj, 'sample-prj.dat')
           })
+
 
 test_that('project info functions work.', {
               prj <- loadProject(file.valid)
@@ -86,7 +93,6 @@ test_that('query retrieval works.', {
               prj <- loadProject(file.valid)
 
               ## add a second scenario
-              clone_query <- function(q) {dplyr::mutate(q,scenario='Scenario2')}
               prj[['Scenario2']] <- lapply(prj[[1]], clone_query)
 
               co2 <- getQuery(prj, 'CO2 concentrations')
@@ -112,6 +118,20 @@ test_that('query retrieval works.', {
               expect_equal(foo$scenario, 'Scenario2')
               expect_equal(foo$X2000, 364.147)
           })
+
+## do this last, since it changes our temporary project data file.
+test_that('scenario can be added to an already-loaded data set.', {
+              prj <- loadProject(file.valid)
+              ## rename the scenario so we can load it again
+              prj[['Scenario2']] <- lapply(prj[[1]], clone_query)
+              prj[[1]] <- NULL
+              prj <- addScenario(SAMPLE.GCAMDB, prj)
+
+              expect_equal(length(prj), 2)
+              expect_true('Reference-filtered' %in% listScenarios(prj))
+              expect_true('Scenario2' %in% listScenarios(prj))
+          })
+
 
 ### Cleanup
 unlink(file.valid)

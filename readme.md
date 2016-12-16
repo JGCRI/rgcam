@@ -1,3 +1,5 @@
+[![Travis-CI Build Status](https://travis-ci.org/JGCRI/rgcam.svg?branch=master)](https://travis-ci.org/JGCRI/rgcam)
+
 # rgcam: An R Package for Extracting and Importing GCAM Data
 
 ## Overview

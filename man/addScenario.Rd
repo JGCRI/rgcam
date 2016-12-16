@@ -4,15 +4,16 @@
 \alias{addScenario}
 \title{Add a scenario from a GCAM output database to a project data set}
 \usage{
-addScenario(dbFile, projFile, scenario = NULL, queryFile = NULL,
+addScenario(dbFile, proj, scenario = NULL, queryFile = NULL,
   clobber = FALSE, miclasspath = NULL, transformations = NULL,
   migabble = NULL)
 }
 \arguments{
 \item{dbFile}{GCAM database to extract scenario from.}
 
-\item{projFile}{Project file to add extracted results to.  The file will be
-created if it doesn't already exist.}
+\item{proj}{Project to add extracted results to.  Can be either a project
+data structure or the name of a project data file.  The file will be created
+if it doesn't already exist.}
 
 \item{scenario}{Name of scenario to extract.  If \code{NULL}, use the last
 scenario in the GCAM database.}

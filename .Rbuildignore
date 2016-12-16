@@ -2,3 +2,6 @@
 ^\.Rproj\.user$
 ^data-raw$
 ^\.travis\.yml$
+^LICENSE.md$
+^readme.md$
+

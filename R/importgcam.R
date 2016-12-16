@@ -40,8 +40,9 @@
 #' it.
 #'
 #' @param dbFile GCAM database to extract scenario from.
-#' @param projFile Project file to add extracted results to.  The file will be
-#' created if it doesn't already exist.
+#' @param proj Project to add extracted results to.  Can be either a project
+#' data structure or the name of a project data file.  The file will be created
+#' if it doesn't already exist.
 #' @param scenario Name of scenario to extract.  If \code{NULL}, use the last
 #' scenario in the GCAM database.
 #' @param queryFile XML query file to pass to the GCAM Model Interface.  If
@@ -58,25 +59,35 @@
 #' @return The project dataset with the new scenario added.
 #' @importFrom dplyr %>%
 #' @export
-addScenario <- function(dbFile, projFile, scenario=NULL, queryFile=NULL,
+addScenario <- function(dbFile, proj, scenario=NULL, queryFile=NULL,
                         clobber=FALSE, miclasspath=NULL, transformations=NULL,
                         migabble=NULL) {
 
-    if(file.exists(projFile)) {
-        projFile <- normalizePath(projFile)
-        if(file.access(projFile, mode=6)!=0) { # 6 == read and write permission
-            ## file.access returns 0 on success
-            msg <- paste("File", projFile,
-                         "exists but lacks either read or write permission.")
-            stop(msg)
+    if(is.character(proj)) {
+        projFile <- proj
+        if(file.exists(projFile)) {
+            projFile <- normalizePath(projFile)
+            if(file.access(projFile, mode=6)!=0) { # 6 == read and write permission
+                ## file.access returns 0 on success
+                msg <- paste("File", projFile,
+                             "exists but lacks either read or write permission.")
+                stop(msg)
+            }
+            prjdata <- loadProject(projFile)
         }
-        prjdata <- loadProject(projFile)
+        else {
+            prjdata <- list()
+            save(prjdata, file=projFile)    # have to create file to use normalizePath
+            projFile <- normalizePath(projFile)
+            attr(prjdata, 'file') <- projFile
+        }
+    }
+    else if(project.valid(proj)==0) {
+        projFile <- attr(proj,'file')
+        prjdata <- proj
     }
     else {
-        prjdata <- list()
-        save(prjdata, file=projFile)    # have to create file to use normalizePath
-        projFile <- normalizePath(projFile)
-        attr(prjdata, 'file') <- projFile
+        stop('addScenario: invalid object passed as proj argument; proj must be a filename or project data object.')
     }
 
     if(!is.null(scenario)) {
@@ -90,7 +101,7 @@ addScenario <- function(dbFile, projFile, scenario=NULL, queryFile=NULL,
             msg <- paste('Scenario', scen$scenario,
                          'already exists in the data set, and clobber=FALSE. Aborting.')
             message(msg)
-            return(NULL)
+            return(prjdata)
         }
     }
 
@@ -112,7 +123,7 @@ addScenario <- function(dbFile, projFile, scenario=NULL, queryFile=NULL,
             msg <- paste('Scenario', scen$scenario,
                          'already exists in the data set, and clobber=FALSE. Aborting.')
             message(msg)
-            return(NULL)
+            return(prjdata)
         }
     }
 
