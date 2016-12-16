@@ -15,8 +15,11 @@ well as to manage previously created project data.
 
 ## Installation
 
-rgcam must be installed from the github repository using
-`install_github`.  The package includes a copy of the GCAM Model
+To install rgcam, open an R session and run
+```R
+install_github('JGCRI/rgcam')
+```
+The package includes a copy of the GCAM Model
 Interface (current as of GCAM v. 4.3), so it is not necessary to have
 it otherwise installed or configured.  You will need a version of Java
 that can run the Model Interface.  The package has been tested with
