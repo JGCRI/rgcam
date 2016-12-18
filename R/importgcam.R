@@ -69,9 +69,8 @@ addScenario <- function(dbFile, proj, scenario=NULL, queryFile=NULL,
             projFile <- normalizePath(projFile)
             if(file.access(projFile, mode=6)!=0) { # 6 == read and write permission
                 ## file.access returns 0 on success
-                msg <- paste("File", projFile,
-                             "exists but lacks either read or write permission.")
-                stop(msg)
+                stop("File ", projFile,
+                             " exists but lacks either read or write permission.")
             }
             prjdata <- loadProject(projFile)
         }
@@ -87,7 +86,7 @@ addScenario <- function(dbFile, proj, scenario=NULL, queryFile=NULL,
         prjdata <- proj
     }
     else {
-        stop('addScenario: invalid object passed as proj argument; proj must be a filename or project data object.')
+        stop("addScenario: invalid object passed as proj argument; proj must be a filename or project data object.")
     }
 
     if(!is.null(scenario)) {
@@ -108,7 +107,7 @@ addScenario <- function(dbFile, proj, scenario=NULL, queryFile=NULL,
     outFile <- runModelInterface(dbFile, scenario, queryFile, miclasspath, migabble)
     tables <- parse_mi_tables(outFile)
     if(length(tables) == 0) {
-        stop('Queries returned no data.')
+        stop("Queries returned no data.")
     }
 
     if(is.null(scenario)) {
@@ -248,7 +247,7 @@ parse_mi_tables <- function(fn) {
     tryCatch({
         fdata <- scan(fn, what = character(), sep = "\n", blank.lines.skip = F, quiet = T)
     }, error = function(err) {
-        stop(paste('error reading file', as.character(err)))
+        stop("error reading file ", as.character(err))
     })
 
     ##printlog("OK.", ts = F)
