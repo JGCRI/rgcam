@@ -14,4 +14,5 @@ This function will check conditions 5-7 for a single query table in a
 scenario data structure.  It will return the number of the first check to
 fail, or 0 if all pass.
 }
+\keyword{internal}
 

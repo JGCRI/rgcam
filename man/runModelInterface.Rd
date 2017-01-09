@@ -26,4 +26,5 @@ This function will run the Model Interface on the selected GCAM output
 database.  The results will be placed in a temporary file, the name of which
 will be returned from the function.
 }
+\keyword{internal}
 

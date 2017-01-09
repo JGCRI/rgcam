@@ -12,4 +12,5 @@ parse_mi_tables(fn)
 \description{
 Parse the raw output of a GCAM batch query into a set of tables.
 }
+\keyword{internal}
 

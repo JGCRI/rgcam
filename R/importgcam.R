@@ -168,6 +168,7 @@ addScenario <- function(dbFile, proj, scenario=NULL, queryFile=NULL,
 #' @param scenstr The scenario string.  This may be a vector, such as the
 #' 'scenario' column in a table of GCAM results
 #' @return \code{list(scenario=Scenario_strings, date=Dates)}
+#' @keywords internal
 sep.date <- function(scenstr) {
     mtx <- stringr::str_split_fixed(scenstr,',date=',2)
     scenario <- mtx[,1]
@@ -189,6 +190,7 @@ sep.date <- function(scenstr) {
 #' @param miclasspath Classpath for the GCAM model interface.  If \code{NULL},
 #' then use the built-in default.
 #' @param migabble Control what happens to Model Interface console output.
+#' @keywords internal
 runModelInterface <- function(dbFile, scenario=NULL, queryFile=NULL,
                               miclasspath=NULL, migabble=NULL) {
 
@@ -230,6 +232,7 @@ runModelInterface <- function(dbFile, scenario=NULL, queryFile=NULL,
 #' Parse the raw output of a GCAM batch query into a set of tables.
 #'
 #' @param fn Name of the file containing the output from the GCAM Model Interface.
+#' @keywords internal
 parse_mi_tables <- function(fn) {
     ## transplanted from the gcammaptools package.
     tables <- list()

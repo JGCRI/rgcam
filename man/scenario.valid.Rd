@@ -14,4 +14,5 @@ This function will check conditions 3-7 for a single scenario component in a
 project data structure.  It will return the number of the first check to
 fail, or 0 if all pass.
 }
+\keyword{internal}
 

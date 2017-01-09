@@ -14,4 +14,5 @@ This function will check the 7 conditions described in
 \code{\link{loadProject}}.  It will return 0 if they pass, or the number of
 the first condition to fail otherwise.
 }
+\keyword{internal}
 

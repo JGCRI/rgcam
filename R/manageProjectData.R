@@ -244,6 +244,7 @@ dropQueries <- function(proj, queries, invert=FALSE,
 #' \code{\link{loadProject}}.  It will return 0 if they pass, or the number of
 #' the first condition to fail otherwise.
 #' @param prjdata The data structure to test.
+#' @keywords internal
 project.valid <- function(prjdata) {
     if(!is.list(prjdata))
         return(1)
@@ -265,6 +266,7 @@ project.valid <- function(prjdata) {
 #' fail, or 0 if all pass.
 #'
 #' @param scendata The data structure to test
+#' @keywords internal
 scenario.valid <- function(scendata) {
     if(!is.list(scendata))
         return(3)
@@ -285,6 +287,7 @@ scenario.valid <- function(scendata) {
 #' scenario data structure.  It will return the number of the first check to
 #' fail, or 0 if all pass.
 #' @param querytable The query table to test.
+#' @keywords internal
 query.valid <- function(querytable) {
     if(!is.data.frame(querytable))
         return(5)

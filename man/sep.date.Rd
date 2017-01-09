@@ -26,4 +26,5 @@ object.  The results are returned as a list with elements 'scenario' and
 \details{
 This function assumes that it can split the
 }
+\keyword{internal}
 
