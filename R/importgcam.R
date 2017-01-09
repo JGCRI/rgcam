@@ -209,16 +209,16 @@ runModelInterface <- function(dbFile, scenario=NULL, queryFile=NULL,
     batch <- PROTOTYPE.MIBATCH          # XML file with placeholders for us to
                                         # fill in
     if(is.null(scenario)) {
-        batch <- batch[grep('\\[SCENARIO\\]', batch, invert=TRUE)] # drop the
+        batch <- batch[grep('[SCENARIO]', batch, invert=TRUE, fixed=TRUE)] # drop the
                                         # scenario designator in this case.
     }
     else {
-        batch <- sub('\\[SCENARIO\\]', scenario, batch)
+        batch <- sub('[SCENARIO]', scenario, batch, fixed=TRUE)
     }
-    batch <- sub('\\[DBFILE\\]', dbFile, batch)
-    batch <- sub('\\[QUERYFILE\\]', queryFile, batch)
+    batch <- sub('[DBFILE]', dbFile, batch, fixed=TRUE)
+    batch <- sub('[QUERYFILE]', queryFile, batch, fixed=TRUE)
     outfile <- tempfile(fileext='.csv')
-    batch <- sub('\\[OUTFILE\\]', outfile, batch)
+    batch <- sub('[OUTFILE]', outfile, batch, fixed=TRUE)
     batchfile <- tempfile(fileext='.xml')
     write(batch, file=batchfile)
 
@@ -339,7 +339,8 @@ table.scen.trim <- function(tbl) {
 #' customized version of the model interface for some reason, this should take
 #' care of all your GCAM query needs.
 DEFAULT.MICLASSPATH <- paste0(system.file("ModelInterface", "jars",
-                                          package="rgcam"),"/\\*:",
+                                          package="rgcam"),"/\\*",
+                              .Platform$path.sep,
                               system.file("ModelInterface",
                                           "ModelInterface.jar",
                                           package="rgcam"))
