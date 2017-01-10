@@ -163,6 +163,30 @@ listQueries <- function(projData, scenario) {
 }
 
 
+#' Return the run date for one or more scenarios in a data set.
+#'
+#' The run dates are recorded in the tables produced by the GCAM Model Interface
+#' and copied into the project data set on import.  This function retrieves the
+#' run dates for the selected scenarios and returns them as a named vector.
+#'
+#' @param projData The data set to report on.
+#' @param scenarios The names of the scenarios
+#' @export
+getRundates <- function(projData, scenarios=NULL)
+{
+    if(is.null(scenarios))
+        scenarios <- listScenarios(projData)
+
+    ## Calls like sapply (annoyingly) convert date objects to numeric, losing
+    ## the information about the epoch.  This should give us a named vector of
+    ## POSIXct objects.
+    datevec <-
+        lapply(scenarios, function(scen) {attr(projData[[scen]], 'date')}) %>%
+            do.call(c,.)
+    names(datevec) <- scenarios
+    datevec
+}
+
 #' Retrieve a query for one or more scenarios
 #'
 #' Return a data frame with the results for a query for all of the selected
