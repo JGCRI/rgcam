@@ -68,8 +68,8 @@ test_that('project info functions work.', {
               ## Test the scenario run date functions.  Unfortunately, our
               ## sample data only has one scenario, so these tests will be
               ## incomplete where multi-scenario return values are concerned.
-              expect_true(is.POSIXt(getRundates(prj,'Reference-filtered')))
-              expect_equal(getRundates(prj)['Reference-filtered'],
+              expect_true(lubridate::is.POSIXt(getRundates(prj,'Reference-filtered')))
+              expect_true(lubridate::with_tz(getRundates(prj)['Reference-filtered'], 'UTC') ==
                            lubridate::ymd_hms('2016-12-13 13:31:05')) # Run date
                                         # of the sample data
           })

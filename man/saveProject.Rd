@@ -4,10 +4,13 @@
 \alias{saveProject}
 \title{Save project data to a backing file.}
 \usage{
-saveProject(prjdata)
+saveProject(prjdata, file = NULL)
 }
 \arguments{
 \item{prjdata}{Project data object.}
+
+\item{file}{Filename to save to.  If \code{NULL}, use the file the project
+was loaded from.}
 }
 \description{
 Write a project data structure to its data file.  This should rarely be

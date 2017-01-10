@@ -66,15 +66,18 @@ loadProject <- function(projFile) {
 #' reason.
 #'
 #' @param prjdata Project data object.
+#' @param file Filename to save to.  If \code{NULL}, use the file the project
+#' was loaded from.
 #' @export
-saveProject <- function(prjdata) {
+saveProject <- function(prjdata, file=NULL) {
     ## validate data first
     stat <- project.valid(prjdata)
     if(stat != 0) {
         stop("saveProject:  invalid project data object, stat=", stat)
     }
-    projFile <- attr(prjdata, 'file')
-    save(prjdata, file=projFile)
+    if(is.null(file))
+        file <- attr(prjdata, 'file')
+    save(prjdata, file=file)
 }
 
 #' List the scenarios in a project data set
