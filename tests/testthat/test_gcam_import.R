@@ -171,6 +171,28 @@ test_that('dropScenarios works in all option configurations.', {
 
           })
 
+test_that('saveProject saves project data correctly.', {
+              prj <- loadProject(file.valid)
+              ## Save to the default location.  Delete the file first to verify
+              ## creation.
+              unlink(file.valid)
+              expect_false(file.exists(file.valid))
+              saveProject(prj)
+              expect_true(file.exists(file.valid))
+              prj2 <- loadProject(file.valid)
+              expect_equal(prj, prj2)
+
+              ## Save to explicit filename
+              altfile <- tempfile()
+              expect_false(file.exists(altfile))
+              prj <- saveProject(prj, file=altfile)
+              expect_true(file.exists(altfile))
+              prj3 <- loadProject(altfile)
+              expect_equal(prj, prj3)
+              unlink(altfile)
+          })
+
+
 test_that('dropQueries works in all (reasonable) option configurations.', {
               prj <- loadProject(file.valid)
               expect_equal(length(prj), 1) # mostly making sure we are starting

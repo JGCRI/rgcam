@@ -19,4 +19,24 @@ option to write the data back to the file.  Mostly it is intended for
 internal use, but it's exported in case it's useful to someone for some
 reason.
 }
+\details{
+The project data structure includes the name of its backing file, which is
+why you can call this function with no file argument.  When you save with an
+explicit file name, the function returns a version of the data structure with
+an updated file attribute.  If you want the data structure in the calling
+frame to have its backing file updated, you have to assign this return value
+back to the original object; otherwise you will write a copy of the data set,
+but your working copy will continue to be backed by the original file.
+
+For example:
+\preformatted{
+> prj <- loadProject(file1.dat)
+> saveProject(prj, 'file2.dat')       # prj is still backed by 'file1.dat'
+### ... modify prj ...
+> saveProject(prj)                    # new data written to 'file1.dat'
+> prj <- saveProject(prj,'file3.dat') # prj now backed by 'file3.dat'
+### ... modify prj again ...
+> saveProject(prj)                    # newest data written to 'file3.dat'
+}
+}
 
