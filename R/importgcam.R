@@ -79,6 +79,8 @@ addScenario <- function(dbFile, proj, scenario=NULL, queryFile=NULL,
             save(prjdata, file=projFile)    # have to create file to use normalizePath
             projFile <- normalizePath(projFile)
             attr(prjdata, 'file') <- projFile
+            unlink(projFile)            # ...but we don't actually want to
+                                        # create the file unless we succeed.
         }
     }
     else if(project.valid(proj)==0) {
@@ -104,6 +106,12 @@ addScenario <- function(dbFile, proj, scenario=NULL, queryFile=NULL,
         }
     }
 
+    ## Catch non-existent db before we try to run the Model Interface
+    if(file.access(dbFile, mode=5) != 0) { # 7 == read-search permission (the
+                                        # dbfile is technically a directory)
+        stop('GCAM database ', dbFile,
+             ' does not exist, or lacks read-search permission.')
+    }
     outFile <- runModelInterface(dbFile, scenario, queryFile, miclasspath, migabble)
     tables <- parse_mi_tables(outFile)
     if(length(tables) == 0) {

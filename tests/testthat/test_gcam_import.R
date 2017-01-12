@@ -13,6 +13,12 @@ dup.scenario <- function(scen, newname) {
     lapply(scen, clone.query)
 }
 
+test_that('Data file is not created on error.', {
+              nosuchfile <- tempfile()
+              expect_false(file.exists(nosuchfile))
+              expect_error(addScenario(nosuchfile, file.valid))
+              expect_false(file.exists(file.valid))
+          })
 
 test_that('Data can be imported from GCAM database.', {
               prj <- addScenario(SAMPLE.GCAMDB, file.valid)
