@@ -110,14 +110,17 @@ addScenario <- function(dbFile, proj, scenario=NULL, queryFile=NULL,
         stop("Queries returned no data.")
     }
 
-    if(is.null(scenario)) {
-        ## The scenario name was pulled from the database.  It will be in the
-        ## scenario column of the tables.
-        scenario <- tables[[1]]$scenario[1]
-        scen <- sep.date(scenario)
+    ## The scenario name was pulled from the database.  It will be in the
+    ## scenario column of the tables.  We will also update the date element of
+    ## 'scen' here, since if the user passed in a specific scenario, it probably
+    ## didn't include a date.
+    dbscenario <- tables[[1]]$scenario[1]
+    scen <- sep.date(dbscenario)
 
+    if(is.null(scenario)) {
         ## Now that we have the scenario name we can check to see if it already
         ## exists.
+        scen <- scen
         if(!clobber && scen$scenario %in% names(prjdata)) {
             msg <- paste('Scenario', scen$scenario,
                          'already exists in the data set, and clobber=FALSE. Aborting.')
@@ -172,7 +175,10 @@ addScenario <- function(dbFile, proj, scenario=NULL, queryFile=NULL,
 sep.date <- function(scenstr) {
     mtx <- stringr::str_split_fixed(scenstr,',date=',2)
     scenario <- mtx[,1]
-    date <- lubridate::ydm_hms(mtx[,2])
+    havedate <- mtx[,2] != ''
+    date <- rep(as.POSIXct(NA), length(mtx[,2]))
+    date[havedate] <- lubridate::ydm_hms(mtx[havedate,2]) # Don't try to do this
+                                        # with ifelse, or you will be sad.
     list(scenario=scenario, date=date)
 }
 
