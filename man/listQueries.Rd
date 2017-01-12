@@ -4,12 +4,16 @@
 \alias{listQueries}
 \title{List the queries available for a scenario}
 \usage{
-listQueries(projData, scenario)
+listQueries(projData, scenarios = NULL, anyscen = TRUE)
 }
 \arguments{
 \item{projData}{The data set to report on.}
 
-\item{scenario}{The name of the scenario to report on.}
+\item{scenarios}{The name(s) of the scenario(s) to report on.  If NULL,
+report on all of them.}
+
+\item{anyscen}{If \code{TRUE}, then list queries that are in any scenario.
+If \code{FALSE}, list queries that are in all scenarios.}
 }
 \description{
 Return the names of the queries available for a scenario in a project data

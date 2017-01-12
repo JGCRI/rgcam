@@ -170,20 +170,36 @@ dropScenarios <- function(proj, scenarios, invert=FALSE, writeback=is.character(
 #' to have been previously loaded, so it cannot take a file name.
 #'
 #' @param projData The data set to report on.
-#' @param scenario The name of the scenario to report on.
+#' @param scenarios The name(s) of the scenario(s) to report on.  If NULL,
+#' report on all of them.
+#' @param anyscen If \code{TRUE}, then list queries that are in any scenario.
+#' If \code{FALSE}, list queries that are in all scenarios.
 #' @export
-listQueries <- function(projData, scenario) {
+listQueries <- function(projData, scenarios=NULL, anyscen=TRUE) {
     if(is.character(projData)) {
         stop("This function requires the data set to have been already loaded.")
     }
 
-    if(scenario %in% names(projData)) {
-        names(projData[[scenario]])
+    if(is.null(scenarios)) {
+        scenarios <- listScenarios(projData)
     }
     else {
-        warning("Scenario ", scenario, " is not in this data set.")
-        NULL
+        scenok <- scenarios %in% names(projData)
+        if(!all(scenok)) {
+            for(scen in scenarios[!scenok])
+                warning('listQueries: Scenario ', scen,
+                        ' is not in this data set.')
+            scenarios <- scenarios[scenok]
+            if(length(scenarios) == 0)
+                stop('listQueries: No valid scenarios given.')
+        }
     }
+
+    ## fetch the names of the valid scenarios
+    sqlist <- lapply(scenarios, function(scen) {names(projData[[scen]])})
+
+    combine <- if(anyscen) union else intersect
+    Reduce(combine, sqlist)
 }
 
 
@@ -274,9 +290,12 @@ dropQueries <- function(proj, queries, invert=FALSE,
 
     for(scen in scenarios) {
         n <- names(proj[[scen]])
+        rd <- attr(proj[[scen]], 'date')
         ## This line picks the queries to keep.  If invert==TRUE, then that's
         ## the queries in the list; otherwise it's the ones not in the list.
         proj[[scen]] <- proj[[scen]][(n %in% queries) == invert]
+        ## Have to restore the date attribute
+        attr(proj[[scen]], 'date') <- rd
     }
 
     if(writeback) {

@@ -10,7 +10,9 @@ save(notdata, file=file.bad)
 ## helper function for creating extra scenarios
 dup.scenario <- function(scen, newname) {
     clone.query <- function(q) {dplyr::mutate(q,scenario=newname)}
-    lapply(scen, clone.query)
+    ns <- lapply(scen, clone.query)
+    attr(ns,'date') <- Sys.time()
+    ns
 }
 
 test_that('Data file is not created on error.', {
@@ -63,13 +65,27 @@ test_that('loadProject works.', {
 
 test_that('project info functions work.', {
               prj <- loadProject(file.valid)
-              expect_equal(listScenarios(prj), 'Reference-filtered')
+              prj[['Scenario2']] <- dup.scenario(prj[[1]], 'Scenario2')
+              ## List scenarios and queries
+              expect_equal(listScenarios(prj),
+                           c('Reference-filtered', 'Scenario2'))
               expect_equal(listQueries(prj,'Reference-filtered'),
                            c('CO2 concentrations', 'Climate forcing',
                              'Global mean temperature', 'GDP by region',
                              'Population by region',
                              'Aggregated Land Allocation',
                              'Building floorspace', 'Land Allocation'))
+              ## drop from each scenario all but one query so we can test the
+              ## 'anyscen' options.  We haven't tested dropQueries yet, so a
+              ## failure in that function could cause a failure here too.
+              q1 <- c('CO2 concentrations', 'Climate forcing')
+              q2 <- c('Climate forcing', 'GDP by region')
+              prj <- dropQueries(prj, q1, invert=TRUE,
+                                 scenarios='Reference-filtered' ) %>%
+                  dropQueries(q2, invert=TRUE,
+                              scenarios='Scenario2')
+              expect_equal(listQueries(prj), union(q1,q2))
+              expect_equal(listQueries(prj, anyscen=FALSE), intersect(q1,q2))
 
               ## Test the scenario run date functions.  Unfortunately, our
               ## sample data only has one scenario, so these tests will be
