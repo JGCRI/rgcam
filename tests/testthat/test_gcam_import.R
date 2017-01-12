@@ -239,6 +239,74 @@ test_that('dropQueries works in all (reasonable) option configurations.', {
               saveProject(prj)
           })
 
+test_that('addQueryTable works.', {
+              altfile <- tempfile()     # avoid disturbing our test case
+              prj <- loadProject(file.valid)
+              prj[['Scenario2']] <- dup.scenario(prj[[1]], 'Scenario2')
+              prj <- saveProject(prj, altfile)
+              testqueryname <- 'Aggregated Land Allocation'
+
+              table1 <- getQuery(prj, testqueryname) # should
+                                        # contain both scenarios
+
+              ## Test failure cases first
+              prj2 <- prj               # so we can verify that prj2 is
+                                        # unchanged on failure.
+              ## replace with noclobber
+              expect_error(
+                  prj2 <- addQueryTable(prj, table1,
+                                        testqueryname) )
+              expect_equal(prj, prj2)
+
+              ## add with no date
+              expect_error(
+                  prj2 <- addQueryTable(prj, table1, 'New Query',
+                                        strict.rundate=TRUE) )
+              expect_equal(prj, prj2)
+
+              ## add with a bad date
+              table2 <- dplyr::mutate(table1, scenario=paste0(scenario, ',date=',
+                                              Sys.time()))
+              expect_error(
+                  prj2 <- addQueryTable(prj, table2, 'New Query',
+                                        strict.rundate=TRUE) )
+              expect_equal(prj, prj2)
+
+              ## From here out we should succeed
+              ## no date, clobber allowed
+              prj2 <- addQueryTable(prj, table1, testqueryname,
+                                    clobber=TRUE)
+              expect_equal(prj, prj2, check.attributes=FALSE)   # shouldn't have
+                                        # changed anything, but row names may be
+                                        # different, so ignore attributes.
+              ## no date, new query
+              prj2 <- addQueryTable(prj, table1, 'New Query1')
+              expect_true('New Query1' %in% listQueries(prj2, 'Reference-filtered'))
+              expect_true('New Query1' %in% listQueries(prj2, 'Scenario2'))
+              expect_equal(getQuery(prj, testqueryname),
+                           getQuery(prj2, 'New Query1'))
+
+              ## wrong date, but strict.rundate not in effect
+              prj2 <- addQueryTable(prj, table2, 'New Query2')
+              expect_true('New Query2' %in% listQueries(prj2, 'Reference-filtered'))
+              expect_true('New Query2' %in% listQueries(prj2, 'Scenario2'))
+              expect_equal(getQuery(prj, testqueryname),
+                           getQuery(prj2, 'New Query2'))
+
+              ## add to a file instead of a structure
+              prj3 <- addQueryTable(altfile, table1, 'New Query3')
+              expect_true('New Query2' %in%
+                          listQueries(prj3, 'Reference-filtered')) # Previous
+                                        # queries should have been written to
+                                        # file.
+              expect_true('New Query3' %in%
+                          listQueries(prj3, 'Reference-filtered'))
+
+              ## remove the tempfile
+              unlink(altfile)
+          })
+
+
 ### Cleanup
 unlink(file.valid)
 unlink(file.bad)
