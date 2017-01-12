@@ -128,6 +128,9 @@ test_that('query retrieval works.', {
               ## add a second scenario
               prj[['Scenario2']] <- dup.scenario(prj[[1]], 'Scenario2')
 
+              ## getting a nonexistent query is an error
+              expect_error(getQuery(prj, 'FOO'), 'is not in any scenarios')
+
               co2 <- getQuery(prj, 'CO2 concentrations')
               expect_true(is.data.frame(co2))
               expect_equal(nrow(co2), 2)

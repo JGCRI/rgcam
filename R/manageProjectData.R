@@ -242,6 +242,10 @@ getQuery <- function(projData, query, scenarios=NULL) {
         scenarios <- listScenarios(projData)
     }
 
+    if(! query %in% listQueries(projData))
+        stop('getQuery: Query ', query,
+             ' is not in any scenarios in the data set.')
+
     queries <- lapply(scenarios, function(s) {projData[[s]][[query]]})
 
     do.call(rbind, queries)
