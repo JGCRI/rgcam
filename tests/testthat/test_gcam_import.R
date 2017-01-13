@@ -6,12 +6,14 @@ file.valid <- tempfile()
 file.bad <- tempfile()
 notdata <- list()
 save(notdata, file=file.bad)
+testtime <- lubridate::ymd_hm('1863-11-19 15:45',tz='EST')
+datestrfmt <- '%Y-%d-%m %H:%M:%S'
 
 ## helper function for creating extra scenarios
 dup.scenario <- function(scen, newname) {
     clone.query <- function(q) {dplyr::mutate(q,scenario=newname)}
     ns <- lapply(scen, clone.query)
-    attr(ns,'date') <- Sys.time()
+    attr(ns,'date') <- testtime
     ns
 }
 
@@ -290,8 +292,9 @@ test_that('addQueryTable works.', {
               expect_equal(prj, prj2)
 
               ## add with a bad date
-              table2 <- dplyr::mutate(table1, scenario=paste0(scenario, ',date=',
-                                              Sys.time()))
+              table2 <- dplyr::mutate(table1,
+                                      scenario=paste0(scenario, ',date=',
+                                                      format(testtime, datestrfmt)))
               expect_error(
                   prj2 <- addQueryTable(prj, table2, 'New Query',
                                         strict.rundate=TRUE) )
