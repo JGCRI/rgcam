@@ -66,6 +66,9 @@ addQueryTable <- function(project, qdata, queryname, clobber=FALSE,
         project <- loadProject(project)
     }
 
+    ## standardize the case of column names.
+    qdata <- stdcase(qdata)
+
     ## Check to see if the scenario name includes a date marker.  If so, split
     ## the date into its own column.
     if(all(grepl('date=', qdata$scenario))) {

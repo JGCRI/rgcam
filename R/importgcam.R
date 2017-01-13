@@ -137,7 +137,7 @@ addScenario <- function(dbFile, proj, scenario=NULL, queryFile=NULL,
         }
     }
 
-    tables <- lapply(tables, table.scen.trim)
+    tables <- lapply(tables, table.cleanup)
 
     ## apply transformations, if any
     if(!is.null(transformations)) {
@@ -336,6 +336,17 @@ parse_mi_output <- function(fn) {
 }
 
 
+## Apply the scenario trim and column standardize functions to a table
+##
+## This is just a helper function for use in lapply and similar constructs.  All
+## it does is apply the two functions mentioned back to back.  It standardizes
+## first to ensure lower case for the "scenario" column.
+table.cleanup <- function(tbl)
+{
+    stdcase(tbl) %>% table.scen.trim
+    table.scen.trim(tbl)
+}
+
 ## Trim the 'date=' from the scenario column in a table
 ##
 ## Return a version of a GCAM results table in which the scenario name contains
@@ -343,6 +354,26 @@ parse_mi_output <- function(fn) {
 ## packed into that column.
 table.scen.trim <- function(tbl) {
     dplyr::mutate(tbl, scenario=sep.date(scenario)[['scenario']])
+}
+
+#' Standardize the case of a table's columns.
+#'
+#' GCAM is a little inconsistent about the case of the column names in its
+#' tables.  Usually it's all lower case, but occasionally we get a 'Region'
+#' instead of 'region'.  To keep analysis functions from having to guess at the
+#' case they need to be looking for we standardize to all lower case, except for
+#' the XYYYY year columns, and 'Units', which existing tools all expect to be in
+#' title case.
+#'
+#' @param tbl The table to standardize
+#' @keywords internal
+stdcase <- function(tbl)
+{
+    lccols <- !grepl('^X[0-9]{4}', names(tbl))
+    units <- grepl('units', names(tbl), ignore.case=TRUE)
+    names(tbl)[lccols] <- tolower(names(tbl)[lccols])
+    names(tbl)[units] <- 'Units'
+    tbl
 }
 
 #' Default java class path for running the Model Interface

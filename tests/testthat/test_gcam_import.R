@@ -138,6 +138,7 @@ test_that('query retrieval works.', {
               expect_equal(nrow(co2), 2)
               expect_equal(co2$scenario, c('Reference-filtered', 'Scenario2'))
               expect_equal(co2$X2100, rep(738.939,2))
+              expect_equal(co2$Units, rep('PPM',2))
 
               ## single scenario query
               co2.single <- getQuery(prj, 'CO2 concentrations', 'Scenario2')
@@ -320,6 +321,16 @@ test_that('addQueryTable works.', {
               expect_true('New Query2' %in% listQueries(prj2, 'Scenario2'))
               expect_equal(getQuery(prj, testqueryname),
                            getQuery(prj2, 'New Query2'))
+
+              ## check that case gets corrected when it's wrong
+              tablecase <- dplyr::rename(table1, Scenario=scenario,
+                                         Region=region)
+              prj2a <- addQueryTable(prj2, tablecase, 'Bad Case Query')
+              bctbl <- getQuery(prj2a, 'Bad Case Query')
+              expect_true('scenario' %in% names(bctbl))
+              expect_true('region' %in% names(bctbl))
+              expect_true('Units' %in% names(bctbl))
+              expect_true('X2050' %in% names(bctbl))
 
               ## add to a file instead of a structure
               prj3 <- addQueryTable(altfile, table1, 'New Query3')
