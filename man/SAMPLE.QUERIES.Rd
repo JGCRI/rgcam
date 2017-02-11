@@ -13,4 +13,3 @@ These queries should work with the sample data in
 \code{\link{SAMPLE.GCAMDB}}.
 }
 \keyword{datasets}
-

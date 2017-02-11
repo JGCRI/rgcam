@@ -14,4 +14,3 @@ Return the names of the scenarios available in a project data set.  The input
 can be either the name of a file containing the data set, or the data
 structure previously loaded from such a file.
 }
-

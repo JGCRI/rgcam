@@ -15,4 +15,3 @@ database has been stripped out to control the total size, so a lot of queries
 won't work properly.  The \code{\link{SAMPLE.QUERIES}} should all work.
 }
 \keyword{datasets}
-

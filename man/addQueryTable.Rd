@@ -64,4 +64,3 @@ came from.  If the attempt to add the query to \emph{any} scenarios fails,
 then the function will throw an error and the project data will be
 unmodified.
 }
-

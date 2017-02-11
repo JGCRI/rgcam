@@ -4,7 +4,7 @@
 \alias{query.valid}
 \title{Check whether a query table in a scenario component structure is valid.}
 \usage{
-query.valid(querytable)
+\method{query}{valid}(querytable)
 }
 \arguments{
 \item{querytable}{The query table to test.}
@@ -15,4 +15,3 @@ scenario data structure.  It will return the number of the first check to
 fail, or 0 if all pass.
 }
 \keyword{internal}
-

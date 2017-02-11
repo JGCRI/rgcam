@@ -40,4 +40,3 @@ to use \code{dplyr} to make whatever transformations you need to make.  You
 can also make the transformations permanent by applying them at import time
 using the \code{transformations} argument to \code{\link{addScenario}}.
 }
-

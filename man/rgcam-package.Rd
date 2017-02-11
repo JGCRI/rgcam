@@ -57,3 +57,7 @@ co2 <- getQuery(project.data, 'query-name')
 }
 }
 
+\author{
+\strong{Maintainer}: Robert Link \email{robert.link@pnnl.gov}
+
+}

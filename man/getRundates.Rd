@@ -16,4 +16,3 @@ The run dates are recorded in the tables produced by the GCAM Model Interface
 and copied into the project data set on import.  This function retrieves the
 run dates for the selected scenarios and returns them as a named vector.
 }
-

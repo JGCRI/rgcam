@@ -33,4 +33,3 @@ Despite these checks, it is possible to construct a data set that passes and
 yet still contains bad data.  When in doubt load the file directly and check
 to see that it contains the data you expect it to.
 }
-

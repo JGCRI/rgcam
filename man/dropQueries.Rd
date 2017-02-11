@@ -38,4 +38,3 @@ As with \code{\link{dropScenarios}}, it is possible and perhaps occasionally
 useful to specify a file but to force the file not to be updated by
 specifying \code{writeback=FALSE}.
 }
-

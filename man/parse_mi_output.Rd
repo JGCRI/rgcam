@@ -21,4 +21,3 @@ This function is obsolete and is included only for backward compatibility
 with old code that uses it.  Instead, use \code{\link{addScenario}} to
 process GCAM data into a native structure.
 }
-

@@ -20,4 +20,3 @@ Return the names of the queries available for a scenario in a project data
 set.  Unlike \code{\link{listScenarios}}, this function requires the data set
 to have been previously loaded, so it cannot take a file name.
 }
-

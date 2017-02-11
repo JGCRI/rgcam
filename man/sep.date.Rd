@@ -27,4 +27,3 @@ object.  The results are returned as a list with elements 'scenario' and
 This function assumes that it can split the
 }
 \keyword{internal}
-
