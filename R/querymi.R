@@ -65,6 +65,9 @@ runQuery.localDBConn <- function(dbConn, query, scenarios, regions) {
     queryResults <- system2(command="java", args=args, env=env, stdout=T)
 
     results <- read.csv(textConnection(queryResults), skip=4)
+    # The results for runMIQuery have not been aggregated (if for instance we are querying by region)
+    # so we should do that now.
+    results <- aggregate(value ~ ., results, FUN=sum)
     return(results)
 }
 
@@ -77,7 +80,7 @@ runQuery.localDBConn <- function(dbConn, query, scenarios, regions) {
 #' In addition we require TODO: optionally?) the name of the database to query.
 #'
 #' @param address The server address such as IP or domain name address.
-#' @param port The server port. 
+#' @param port The server port.
 #' @param username A username configured with READ access on the remote BaseX
 #' database server.
 #' @param password The password for the said username. WARNING: currently just
@@ -119,6 +122,9 @@ runQuery.remoteDBConn <- function(dbConn, query, scenarios, regions) {
     response <- POST(url, body=restQuery)
 
     results <- content(response, "parsed")
+    # The results for runMIQuery have not been aggregated (if for instance we are querying by region)
+    # so we should do that now.
+    results <- aggregate(value ~ ., results, FUN=sum)
     return(results)
 }
 

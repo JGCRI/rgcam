@@ -39,7 +39,7 @@
 #' be returned from the function so that it can be used without having to reread
 #' it.
 #'
-#' @param dbFile GCAM database to extract scenario from.
+#' @param conn A GCAM database to connection extract scenario from.
 #' @param proj Project to add extracted results to.  Can be either a project
 #' data structure or the name of a project data file.  The file will be created
 #' if it doesn't already exist.
@@ -49,8 +49,6 @@
 #' \code{NULL}, use a default query file containing commonly used queries.
 #' @param clobber If \code{TRUE}, overwrite any existing scenario of the same
 #' name; otherwise, fail if \code{scenario} already exists in the data set.
-#' @param miclasspath Java class path for the GCAM Model Interface.  If
-#' \code{NULL}, use a bult-in default.
 #' @param transformations Transformation functions to apply to the queries (see
 #' details).
 #' @param migabble Control what happens to the model interface console output.
@@ -59,8 +57,8 @@
 #' @return The project dataset with the new scenario added.
 #' @importFrom dplyr %>%
 #' @export
-addScenario <- function(dbFile, proj, scenario=NULL, queryFile=NULL,
-                        clobber=FALSE, miclasspath=NULL, transformations=NULL,
+addScenario <- function(conn, proj, scenario=NULL, queryFile=NULL,
+                        clobber=FALSE, transformations=NULL,
                         migabble=NULL) {
 
     if(is.character(proj)) {
@@ -106,14 +104,8 @@ addScenario <- function(dbFile, proj, scenario=NULL, queryFile=NULL,
         }
     }
 
-    ## Catch non-existent db before we try to run the Model Interface
-    if(file.access(dbFile, mode=5) != 0) { # 7 == read-search permission (the
-                                        # dbfile is technically a directory)
-        stop('GCAM database ', dbFile,
-             ' does not exist, or lacks read-search permission.')
-    }
-    outFile <- runModelInterface(dbFile, scenario, queryFile, miclasspath, migabble)
-    tables <- parse_mi_tables(outFile)
+    # TODO: ensure working connection
+    tables <- run_batch_queries(conn, scenario, parse_batch_query(queryFile))
     if(length(tables) == 0) {
         stop("Queries returned no data.")
     }
@@ -333,6 +325,44 @@ parse_mi_output <- function(fn) {
     .Deprecated('addScenario','rgcam',
                 'This function will be removed in a future release.  Consider importing your data with addScenario instead.')
     parse_mi_tables(fn)
+}
+
+#' Parse a Model Interface batch query file so each aQuery can get sent to be
+#' run individually.
+#'
+#' @param fn Name of the batch query file to parse
+#' @return A list of queries by name of a list $regions and $query which has
+#' the list of regions to query and the query text.
+#' @importFrom xml2 read_xml, xml_children, xml_text, xml_find_all, xml_find_first, xml_attr
+#' @keywords internal
+parse_batch_query <- function(fn) {
+    batch_xml <- read_xml(fn)
+    a_queries <- xml_children(batch_xml)
+    query_list <- lapply(a_queries, function(a_query) {
+        ret <- list()
+        ret$regions <- xml_text(xml_find_all(a_query, "./region/@name"))
+        ret$query <- xml_find_first(a_query, "./*[@title]")
+        return(ret)
+    })
+    names(query_list) <- sapply(query_list, function(a_query) {
+        xml_attr(a_query$query,"title")
+    })
+
+    return(query_list)
+}
+
+#' Run a parsed list of batch queries on the given database connection and
+#' for the given scenario.
+#'
+#' @param conn A database connection.
+#' @param scenarios A list of scenario to query.
+#' @param query_list A list of queries to run as generated from \code{\link{parse_batch_query}}.
+#' @return A list of data tables representing the query results.
+#' @keywords internal
+run_batch_queries <- function(conn, scenarios, query_list) {
+    lapply(query_list, function(query, conn, scenarios) {
+        runQuery(conn, query$query, scenarios, query$regions)
+    }, conn, scenarios)
 }
 
 
