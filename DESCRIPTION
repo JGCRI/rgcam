@@ -20,7 +20,9 @@ LazyData: true
 Imports:
     stringr,
     dplyr,
-    httr
+    readr,
+    httr,
+    xml2
 RoxygenNote: 6.0.1
 Suggests: testthat
 Suggests: testthat,

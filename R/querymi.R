@@ -48,11 +48,14 @@ localDBConn <- function(miclasspath, dbPath, dbFile) {
 
 #' Run query specialization for local databases
 #' @export
+#' @importFrom readr read_csv
+#' @importFrom dplyr %>% group_by_ summarize
 runQuery.localDBConn <- function(dbConn, query, scenarios, regions) {
-    xqScenarios <- paste0("('", paste(scenarios, collapse="','"), "')")
-    xqRegion <- paste0("('", paste(regions, collapse="','"), "')")
-    env <- c(paste("CLASSPATH", dbConn$miclasspath, sep="="))
-    args <- c(
+    xqScenarios <- ifelse(length(scenarios) == 0, "()", paste0("('", paste(scenarios, collapse="','"), "')"))
+    xqRegion <- ifelse(length(regions) == 0, "()", paste0("('", paste(regions, collapse="','"), "')"))
+    cmd <- c(
+        "java",
+        paste("-cp", dbConn$miclasspath),
         "-Xmx2g", #TODO: memory limits?
         paste0("-Dorg.basex.DBPATH=", dbConn$dbPath),
         "org.basex.BaseX",
@@ -62,12 +65,12 @@ runQuery.localDBConn <- function(dbConn, query, scenarios, regions) {
         paste0("\"", "import module namespace mi = 'ModelInterface.ModelGUI2.xmldb.RunMIQuery';",
                "mi:runMIQuery(", query, ",", xqScenarios, ",", xqRegion, ")", "\"")
         )
-    queryResults <- system2(command="java", args=args, env=env, stdout=T)
-
-    results <- read.csv(textConnection(queryResults), skip=4)
+    results <- read_csv(pipe(paste(cmd, collapse=" ")))
     # The results for runMIQuery have not been aggregated (if for instance we are querying by region)
     # so we should do that now.
-    results <- aggregate(value ~ ., results, FUN=sum)
+    results <- results %>%
+        group_by_(.dots=names(results)[names(results) != "value"]) %>%
+        summarize(value=sum(value))
     return(results)
 }
 
@@ -88,8 +91,6 @@ runQuery.localDBConn <- function(dbConn, query, scenarios, regions) {
 #' @param dbFile GCAM database to extract scenario from.
 #' @return A connection to a remote BaseX databasse which can be used to run
 #' queries.
-#' @importFrom httr POST
-#' @importFrom httr content
 #' @export
 remoteDBConn <- function(address, port, username, password, dbFile) {
     db_inst <- structure(
@@ -103,9 +104,11 @@ remoteDBConn <- function(address, port, username, password, dbFile) {
 
 #' Run query specialization for remote databases
 #' @export
+#' @importFrom httr POST http_error content
+#' @importFrom dplyr %>% group_by_ summarize
 runQuery.remoteDBConn <- function(dbConn, query, scenarios, regions) {
-    xqScenarios <- paste0("('", paste(scenarios, collapse="','"), "')")
-    xqRegion <- paste0("('", paste(regions, collapse="','"), "')")
+    xqScenarios <- ifelse(length(scenarios) == 0, "()", paste0("('", paste(scenarios, collapse="','"), "')"))
+    xqRegion <- ifelse(length(regions) == 0, "()", paste0("('", paste(regions, collapse="','"), "')"))
     restQuery <- paste(
         '<rest:query xmlns:rest="http://basex.org/rest">',
             '<rest:text><![CDATA[',
@@ -121,10 +124,17 @@ runQuery.remoteDBConn <- function(dbConn, query, scenarios, regions) {
 
     response <- POST(url, body=restQuery)
 
+    # error if the POST did not return with a success
+    if(http_error(response)) {
+        stop(content(response, "text"))
+    }
+
     results <- content(response, "parsed")
     # The results for runMIQuery have not been aggregated (if for instance we are querying by region)
     # so we should do that now.
-    results <- aggregate(value ~ ., results, FUN=sum)
+    results <- results %>%
+        group_by_(.dots=names(results)[names(results) != "value"]) %>%
+        summarize(value=sum(value))
     return(results)
 }
 

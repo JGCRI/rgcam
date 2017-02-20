@@ -333,7 +333,7 @@ parse_mi_output <- function(fn) {
 #' @param fn Name of the batch query file to parse
 #' @return A list of queries by name of a list $regions and $query which has
 #' the list of regions to query and the query text.
-#' @importFrom xml2 read_xml, xml_children, xml_text, xml_find_all, xml_find_first, xml_attr
+#' @importFrom xml2 read_xml xml_children xml_text xml_find_all xml_find_first xml_attr
 #' @keywords internal
 parse_batch_query <- function(fn) {
     batch_xml <- read_xml(fn)
