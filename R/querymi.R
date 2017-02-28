@@ -49,7 +49,7 @@ localDBConn <- function(miclasspath, dbPath, dbFile) {
 #' Run query specialization for local databases
 #' @export
 #' @importFrom readr read_csv
-#' @importFrom dplyr %>% group_by_ summarize
+#' @importFrom dplyr %>% group_by_ summarize ungroup
 runQuery.localDBConn <- function(dbConn, query, scenarios, regions) {
     xqScenarios <- ifelse(length(scenarios) == 0, "()", paste0("('", paste(scenarios, collapse="','"), "')"))
     xqRegion <- ifelse(length(regions) == 0, "()", paste0("('", paste(regions, collapse="','"), "')"))
@@ -70,7 +70,7 @@ runQuery.localDBConn <- function(dbConn, query, scenarios, regions) {
     # so we should do that now.
     results <- results %>%
         group_by_(.dots=names(results)[names(results) != "value"]) %>%
-        summarize(value=sum(value))
+        summarize(value=sum(value)) %>% ungroup()
     return(results)
 }
 
@@ -105,7 +105,7 @@ remoteDBConn <- function(address, port, username, password, dbFile) {
 #' Run query specialization for remote databases
 #' @export
 #' @importFrom httr POST http_error content
-#' @importFrom dplyr %>% group_by_ summarize
+#' @importFrom dplyr %>% group_by_ summarize ungroup
 runQuery.remoteDBConn <- function(dbConn, query, scenarios, regions) {
     xqScenarios <- ifelse(length(scenarios) == 0, "()", paste0("('", paste(scenarios, collapse="','"), "')"))
     xqRegion <- ifelse(length(regions) == 0, "()", paste0("('", paste(regions, collapse="','"), "')"))
@@ -134,7 +134,7 @@ runQuery.remoteDBConn <- function(dbConn, query, scenarios, regions) {
     # so we should do that now.
     results <- results %>%
         group_by_(.dots=names(results)[names(results) != "value"]) %>%
-        summarize(value=sum(value))
+        summarize(value=sum(value)) %>% ungroup()
     return(results)
 }
 
