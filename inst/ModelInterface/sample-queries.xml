@@ -44,6 +44,16 @@
 
       <aQuery>
 	<all-regions/>
+        <gdpQueryBuilder title="PPP GDP by region">
+          <axis1 name="Region">region</axis1>
+          <axis2 name="Year">gdp-per-capita-ppp</axis2>
+          <xPath buildList="true" dataName="gdp-per-capita-ppp" group="false" sumAll="false">GDP/gdp-per-capita-ppp/text()</xPath>
+          <comments/>
+	</gdpQueryBuilder>
+      </aQuery>
+
+      <aQuery>
+	<all-regions/>
          <demographicsQuery title="Population by region">
             <axis1 name="region">region</axis1>
             <axis2 name="Year">populationMiniCAM</axis2>

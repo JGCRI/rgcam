@@ -344,7 +344,6 @@ parse_mi_output <- function(fn) {
 table.cleanup <- function(tbl)
 {
     stdcase(tbl) %>% table.scen.trim
-    table.scen.trim(tbl)
 }
 
 ## Trim the 'date=' from the scenario column in a table

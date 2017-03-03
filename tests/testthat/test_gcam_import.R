@@ -74,6 +74,7 @@ test_that('project info functions work.', {
               expect_equal(listQueries(prj,'Reference-filtered'),
                            c('CO2 concentrations', 'Climate forcing',
                              'Global mean temperature', 'GDP by region',
+                             'PPP GDP by region',
                              'Population by region',
                              'Aggregated Land Allocation',
                              'Building floorspace', 'Land Allocation'))
