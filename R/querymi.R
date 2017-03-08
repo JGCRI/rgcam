@@ -62,8 +62,8 @@ runQuery.localDBConn <- function(dbConn, query, scenarios, regions) {
         "-smethod=csv",
         "-scsv=header=yes",
         paste0("-i", dbConn$dbFile),
-        paste0("\"", "import module namespace mi = 'ModelInterface.ModelGUI2.xmldb.RunMIQuery';",
-               "mi:runMIQuery(", query, ",", xqScenarios, ",", xqRegion, ")", "\"")
+        shQuote(paste0("import module namespace mi = 'ModelInterface.ModelGUI2.xmldb.RunMIQuery';",
+                       "mi:runMIQuery(", query, ",", xqScenarios, ",", xqRegion, ")"))
         )
     results <- read_csv(pipe(paste(cmd, collapse=" ")))
     # The results for runMIQuery have not been aggregated (if for instance we are querying by region)
