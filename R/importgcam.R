@@ -51,105 +51,160 @@
 #' name; otherwise, fail if \code{scenario} already exists in the data set.
 #' @param transformations Transformation functions to apply to the queries (see
 #' details).
+#' @param saveProj A flag to save the project to disk after data has been added.
+#' A user may want to avoid it if they are for instance calling this method several
+#' times and would prefer to save at the end.  Users can always save at anytime by
+#' calling \code{saveProject}.
+#' @param saveProjEach A flag to save the project to disk after each query has
+#' completed. This would be useful if a user suspects a failure in the middle
+#' of running queries and would like to not loose progress made.
 #' @param migabble Control what happens to the model interface console output.
 #' This is passed to the stdout/stderr argument of \code{system2}.  Default is
 #' to discard.
 #' @return The project dataset with the new scenario added.
-#' @importFrom dplyr %>%
 #' @export
 addScenario <- function(conn, proj, scenario=NULL, queryFile=NULL,
                         clobber=FALSE, transformations=NULL,
+                        saveProj=TRUE, saveProjEach=FALSE,
                         migabble=NULL) {
 
-    if(is.character(proj)) {
-        projFile <- proj
-        if(file.exists(projFile)) {
-            projFile <- normalizePath(projFile)
-            if(file.access(projFile, mode=6)!=0) { # 6 == read and write permission
-                ## file.access returns 0 on success
-                stop("File ", projFile,
-                             " exists but lacks either read or write permission.")
-            }
-            prjdata <- loadProject(projFile)
-        }
-        else {
-            prjdata <- list()
-            save(prjdata, file=projFile)    # have to create file to use normalizePath
-            projFile <- normalizePath(projFile)
-            attr(prjdata, 'file') <- projFile
-            unlink(projFile)            # ...but we don't actually want to
-                                        # create the file unless we succeed.
-        }
-    }
-    else if(project.valid(proj)==0) {
-        projFile <- attr(proj,'file')
-        prjdata <- proj
-    }
-    else {
-        stop("addScenario: invalid object passed as proj argument; proj must be a filename or project data object.")
+    prjdata <- loadProject(proj)
+
+    queries <- parse_batch_query(queryFile)
+
+    # If no transformations are set just make it an empty list to simplify logic
+    if(is.null(transformations)) {
+        transformations <- list()
     }
 
-    if(!is.null(scenario)) {
-        ## Since we have the scenario name, we can make a quick check to see if
-        ## the scenario already exists in the data set and abort if clobber is
-        ## not set.  If scenario is NULL (meaning we will get the scenario name
-        ## from the database, then we will have to run the queries and check the
-        ## scenario after the fact.
-        scen <- sep.date(scenario)          # list(scenario=..., date=...)
-        if(!clobber && scen$scenario %in% names(prjdata)) {
-            msg <- paste('Scenario', scen$scenario,
-                         'already exists in the data set, and clobber=FALSE. Aborting.')
-            message(msg)
-            return(prjdata)
+    scen_names <- sep.date(scenario)[["scenario"]]
+
+    for(qn in names(queries)) {
+        # While putting a clobber check here is duplicative to the one in
+        # addQueryTable it would still be useful since we could then potentially
+        # avoid running queries.
+        if(!clobber && all(scen_names %in% listScenarios(prjdata)) &&
+           (qn %in% listQueries(prjdata, scen_names, anyscen=FALSE)))
+        {
+            warning(paste("Skipping running query", qn, "since clobber is false and already exists in project."))
+        } else {
+            bq <- queries[[qn]]
+            table <- runQuery(conn, bq$query, scenario, bq$regions)
+            prjdata <- addQueryTable(prjdata, table, qn, clobber, transformations[[qn]], saveProj && saveProjEach)
         }
     }
 
-    # TODO: ensure working connection
-    tables <- run_batch_queries(conn, scenario, parse_batch_query(queryFile))
-    if(length(tables) == 0) {
-        stop("Queries returned no data.")
+    if(saveProj) {
+        saveProject(prjdata)
     }
 
-    ## The scenario name was pulled from the database.  It will be in the
-    ## scenario column of the tables.  We will also update the date element of
-    ## 'scen' here, since if the user passed in a specific scenario, it probably
-    ## didn't include a date.
-    dbscenario <- tables[[1]]$scenario[1]
-    scen <- sep.date(dbscenario)
+    prjdata
+}
 
-    if(is.null(scenario)) {
-        ## Now that we have the scenario name we can check to see if it already
-        ## exists.
-        scen <- scen
-        if(!clobber && scen$scenario %in% names(prjdata)) {
-            msg <- paste('Scenario', scen$scenario,
-                         'already exists in the data set, and clobber=FALSE. Aborting.')
-            message(msg)
-            return(prjdata)
-        }
+#' Add a data by running a single on a GCAM output database to a project data set
+#'
+#' This function will run the GCAM Model Interface to extract the query data for
+#' a scenario in a GCAM output database.  The query data is added to a project
+#' data file.  This function accepts just a single query to be run as apposed to
+#' a batch file with several queries. This is typically provided as the
+#' XML typically found in the Main_queries.xml.  See examples for possible syntax
+#' to specify these.
+#'
+#' The date value will be clipped from the scenario name and discarded.  If a
+#' newly-read scenario/query is a duplicate of one already in the file, the operation
+#' will fail unless \code{clobber = TRUE}, in which case the old data will
+#' be silently overwritten.
+#'
+#' You may optionally specify transformations to apply to the tables returned by
+#' the model interface.  Examples of transformations you might want to apply
+#' include aggregating values or dropping unused columns.  Specify
+#' transformation as a function object, the function should take a single
+#' argument, which will be the original table and should return the modified table
+#' as a data frame.  Do not drop the "scenario" column as part of one of your
+#' transformations; certain types of plots need it.
+#'
+#' If everything goes as expected, the new scenario will be added to the data
+#' set and written back into the project data file.  The updated project will also
+#' be returned from the function so that it can be used without having to reread
+#' it.
+#'
+#' @param conn A GCAM database to connection extract scenario from.
+#' @param proj Project to add extracted results to.  Can be either a project
+#' data structure or the name of a project data file.  The file will be created
+#' if it doesn't already exist.
+#' @param qn The query name to use when storing the results.  We have to provide
+#' this since it might not always be obvious what this is by looking at the \code{query}.
+#' @param query A Model Interface query to run.  See examples for possible syntax.
+#' @param scenario Name of scenario to extract.  If \code{NULL}, use the last
+#' scenario in the GCAM database.
+#' @param regions A list of regions to query.  If \code{NULL}, all regions will
+#' be queries.
+#' @param clobber If \code{TRUE}, overwrite any existing scenario of the same
+#' name; otherwise, fail if \code{scenario} already exists in the data set.
+#' @param transformations Transformation functions to apply to the queries (see
+#' details).
+#' @param saveProj A flag to save the project to disk after data has been added.
+#' A user may want to avoid it if they are for instance calling this method several
+#' times and would prefer to save at the end.  Users can always save at anytime by
+#' calling \code{saveProject}.
+#' @param migabble Control what happens to the model interface console output.
+#' This is passed to the stdout/stderr argument of \code{system2}.  Default is
+#' to discard.
+#' @return The project dataset with the new scenario added.
+#'
+#' @examples
+#' # The query must be the same XML found in a GCAM query file:
+#' query_name <- "CO2 emissions by region"
+#' co2_query <- '<emissionsQueryBuilder title="CO2 emissions by region">
+#'                   <axis1 name="region">region</axis1>
+#'                   <axis2 name="Year">emissions</axis2>
+#'                   <xPath buildList="true" dataName="emissions" group="false" sumAll="false">*[@type = \'sector\' (:collapse:)]//CO2/emissions/node()</xPath>
+#'                   <comments/>
+#'               </emissionsQueryBuilder>'
+#' addSingleQuery(db_connection, "test.proj", query_name, co2_query, "Reference")
+#'
+#' # However it could also be given for instance as a query string that will result in such XML:
+#' query_name <- "CO2 emissions by region"
+#' co2_query <- paste0("file('~gcam/output/queries/Main_queries.xml')//*[@title='",
+#'                     query_name, "']")
+#' addSingleQuery(db_connection, "test.proj", query_name, co2_query, "Reference")
+#'
+#' # Alternatively a user may use an XML package if for instance their query file is
+#' # stored locally but are running queries on some remote machine:
+#' library(xml2)
+#' queries <- read_xml("~gcam/output/queries/Main_queries.xml")
+#' query_name <- "CO2 emissions by region"
+#' co2_query <- xml_find_first(queries, paste0("//*[@title='", query_name, "']"))
+#' addSingleQuery(db_connection, "test.proj", query_name, co2_query, "Reference")
+#'
+#' @export
+addSingleQuery <- function(conn, proj, qn, query, scenario=NULL, regions=NULL,
+                           clobber=FALSE, transformations=NULL,
+                           saveProj=TRUE, migabble=NULL) {
+
+    prjdata <- loadProject(proj)
+
+    scen_names <- sep.date(scenario)[["scenario"]]
+
+    if(is.null(regions)) {
+        regions <- c()
     }
 
-    tables <- lapply(tables, table.cleanup)
-
-    ## apply transformations, if any
-    if(!is.null(transformations)) {
-        for(xform in names(transformations)) {
-            if(! xform %in% names(tables)) {
-                warning("addScenario: cannot apply transform", xform,
-                        ". No such table in data set.")
-            }
-            else {
-                ## apply this transformation to the query of the same name and
-                ## store it back in its original slot.
-                tables[[xform]] <- transformations[[xform]](tables[[xform]])
-            }
-        }
+    # While putting a clobber check here is duplicative to the one in
+    # addQueryTable it would still be useful since we could then potentially
+    # avoid running queries.
+    if(!clobber && all(scen_names %in% listScenarios(prjdata)) &&
+       (qn %in% listQueries(prjdata, scen_names, anyscen=FALSE)))
+    {
+        warning(paste("Skipping running query", qn, "since clobber is false and already exists in project."))
+    } else {
+        table <- runQuery(conn, query, scenario, regions)
+        prjdata <- addQueryTable(prjdata, table, qn, clobber, transformations, saveProj)
     }
 
-    attr(tables, 'date') <- scen$date
-    prjdata[[scen$scenario]] <- tables
-
-    save(prjdata, file=projFile, compress='xz')
+    if(saveProj) {
+        saveProject(prjdata)
+    }
 
     prjdata
 }
@@ -182,62 +237,14 @@ sep.date <- function(scenstr) {
     list(scenario=scenario, date=date)
 }
 
-#' Run the GCAM Model Interface with results placed into a temporary file.
-#'
-#' This function will run the Model Interface on the selected GCAM output
-#' database.  The results will be placed in a temporary file, the name of which
-#' will be returned from the function.
-#'
-#' @param dbFile The GCAM output database to run queries on.
-#' @param scenario The name of the scenario to query.  If \code{NULL}, then take
-#' the last one in the database.
-#' @param queryFile Name of the file containing the queries.  If \code{NULL},
-#' then use the built-in default.
-#' @param miclasspath Classpath for the GCAM model interface.  If \code{NULL},
-#' then use the built-in default.
-#' @param migabble Control what happens to Model Interface console output.
-#' @keywords internal
-runModelInterface <- function(dbFile, scenario=NULL, queryFile=NULL,
-                              miclasspath=NULL, migabble=NULL) {
-
-    ## XXX Someday, when we have more time we should replace all of this with
-    ## code that invokes the Model Interface functionality directly using
-    ## rjava.
-
-    if(is.null(miclasspath)) {
-        miclasspath <- DEFAULT.MICLASSPATH
-    }
-
-    if(is.null(queryFile)) {
-        queryFile <- SAMPLE.QUERIES
-    }
-
-    batch <- PROTOTYPE.MIBATCH          # XML file with placeholders for us to
-                                        # fill in
-    if(is.null(scenario)) {
-        batch <- batch[grep('[SCENARIO]', batch, invert=TRUE, fixed=TRUE)] # drop the
-                                        # scenario designator in this case.
-    }
-    else {
-        batch <- sub('[SCENARIO]', scenario, batch, fixed=TRUE)
-    }
-    batch <- sub('[DBFILE]', dbFile, batch, fixed=TRUE)
-    batch <- sub('[QUERYFILE]', queryFile, batch, fixed=TRUE)
-    outfile <- tempfile(fileext='.csv')
-    batch <- sub('[OUTFILE]', outfile, batch, fixed=TRUE)
-    batchfile <- tempfile(fileext='.xml')
-    write(batch, file=batchfile)
-
-    system2("java", c("-cp", miclasspath, "ModelInterface/InterfaceMain", "-b",
-                      batchfile), stdout=migabble)
-    outfile
-}
-
 #' Parse the GCAM ModelInterface output
 #'
 #' Parse the raw output of a GCAM batch query into a set of tables.
 #'
 #' @param fn Name of the file containing the output from the GCAM Model Interface.
+#' @importFrom readr read_delim
+#' @importFrom dplyr %>% matches mutate
+#' @importFrom tidyr gather
 #' @keywords internal
 parse_mi_tables <- function(fn) {
     ## transplanted from the gcammaptools package.
@@ -246,7 +253,7 @@ parse_mi_tables <- function(fn) {
     # See if the user has provided any values overriding our defaults
     use_tablenames <- TRUE
     headerline <- "scenario"
-    yearpat <- "X[0-9]{4}"
+    yearpat <- "[0-9]{4}"
 
     ## The original version of this function had a bunch of logging commands.
     ## I've disabled these because I didn't want to bring the logging functions
@@ -281,14 +288,14 @@ parse_mi_tables <- function(fn) {
         }
 
         if (i == length(tableheaders)) {
-            nrows <- -1
+            nrows <- Inf
         } else {
             nrows <- tableheaders[i + 1] - tableheaders[i] - 1 - use_tablenames  # i.e., subtract 1 is using table names
         }
 
         ##printlog("Reading table", i, "in", fn, "( skip =", nskip, " nrows =", nrows, ")")
-        tempdata <- read.table(fn, row.names = NULL, skip = nskip, nrows = nrows, header = T,
-                               sep = ",", comment.char = '#', stringsAsFactors = F)
+        tempdata <- read_delim(fn, delim = ",", skip = nskip, n_max = nrows, col_names = T,
+                               comment = '#')
 
         # Remove extra columns on end - this is often present in the MI output
         if (extrafields > 0) {
@@ -298,8 +305,9 @@ parse_mi_tables <- function(fn) {
 
         ##printlog("Table", i, "name is", table_name)
 
-        # Get rid of 'X' in year names names(tempdata)<-ifelse(grepl('(X2)|(X1)', names(tempdata)),
-        # sub('X','',names(tempdata)), names(tempdata))
+        # Gather and clean up the year columns
+        tempdata <- tempdata %>% gather(key=Year, value=value, matches(yearpat)) %>%
+            mutate(Year=as.integer(Year))
 
         tables[[table_name]] <- tempdata
     }
@@ -309,22 +317,49 @@ parse_mi_tables <- function(fn) {
 
 #' Parse the GCAM ModelInterface output (DEPRECATED)
 #'
-#' Parse the raw output of a GCAM batch query into a set of tables.
-#' Normally you will pass the structure returned by this function to
-#' \code{process_batch_q} extract (and optionally do some filtering
-#' and processing on) the table you are looking for.
+#' Parse the raw output of a GCAM batch query and add them into a project.
 #'
-#' This function is obsolete and is included only for backward compatibility
-#' with old code that uses it.  Instead, use \code{\link{addScenario}} to
-#' process GCAM data into a native structure.
+#' This function could be usefult for users who have exsisting CSV batch query
+#' output they would like to import without having to re-run the queries.
 #'
 #' @param fn Name of the file containing the output from the GCAM Model
 #' Interface.
+#' @param proj Project to add extracted results to.  Can be either a project
+#' data structure or the name of a project data file.  The file will be created
+#' if it doesn't already exist.
+#' @param clobber If \code{TRUE}, overwrite any existing scenario of the same
+#' name; otherwise, fail if scenario/query already exists in the data set.
+#' @param transformations Transformation functions to apply to the queries (see
+#' details).
+#' @param saveProj A flag to save the project to disk after data has been added.
+#' A user may want to avoid it if they are for instance calling this method several
+#' times and would prefer to save at the end.  Users can always save at anytime by
+#' calling \code{saveProject}.
+#' @param saveProjEach A flag to save the project to disk after each query has
+#' completed. This would be useful if a user suspects a failure in the middle
+#' of running queries and would like to not loose progress made.
+#' @return The project dataset with the new scenario added.
 #' @export
-parse_mi_output <- function(fn) {
-    .Deprecated('addScenario','rgcam',
-                'This function will be removed in a future release.  Consider importing your data with addScenario instead.')
-    parse_mi_tables(fn)
+addMIBatchCSV <- function(fn, proj, clobber=FALSE, transformations=NULL,
+                          saveProj=TRUE, saveProjEach=FALSE){
+    proj <- loadProject(proj)
+
+    q_tables <- parse_mi_tables(fn)
+
+    # If no transformations are set just make it an empty list to simplify logic
+    if(is.null(transformations)) {
+        transformations <- list()
+    }
+
+    for(q in names(q_tables)) {
+        proj <- addQueryTable(proj, q_tables[[q]], q, clobber, transformations[[q]], saveProj && saveProjEach)
+    }
+
+    if(saveProj) {
+        saveProject(prjdata)
+    }
+
+    proj
 }
 
 #' Parse a Model Interface batch query file so each aQuery can get sent to be
@@ -334,7 +369,7 @@ parse_mi_output <- function(fn) {
 #' @return A list of queries by name of a list $regions and $query which has
 #' the list of regions to query and the query text.
 #' @importFrom xml2 read_xml xml_children xml_text xml_find_all xml_find_first xml_attr
-#' @keywords internal
+#' @export
 parse_batch_query <- function(fn) {
     batch_xml <- read_xml(fn)
     a_queries <- xml_children(batch_xml)
@@ -350,21 +385,6 @@ parse_batch_query <- function(fn) {
 
     return(query_list)
 }
-
-#' Run a parsed list of batch queries on the given database connection and
-#' for the given scenario.
-#'
-#' @param conn A database connection.
-#' @param scenarios A list of scenario to query.
-#' @param query_list A list of queries to run as generated from \code{\link{parse_batch_query}}.
-#' @return A list of data tables representing the query results.
-#' @keywords internal
-run_batch_queries <- function(conn, scenarios, query_list) {
-    lapply(query_list, function(query, conn, scenarios) {
-        runQuery(conn, query$query, scenarios, query$regions)
-    }, conn, scenarios)
-}
-
 
 ## Apply the scenario trim and column standardize functions to a table
 ##
@@ -434,13 +454,3 @@ SAMPLE.GCAMDB <- system.file("extdata","sample_basexdb",
 #' \code{\link{SAMPLE.GCAMDB}}.
 SAMPLE.QUERIES <- system.file("ModelInterface", "sample-queries.xml",
                               package="rgcam")
-
-#' Prototype Model Interface batch file
-#'
-#' This is a prototype for the batch file that drives the Model Interface.  It
-#' has a bunch of tags like [SCENARIO], [DBFILE], etc. for
-#' \code{\link{runModelInterface}} to fill in with the particulars of the
-#' queries we are trying to run.
-PROTOTYPE.MIBATCH <- readLines(system.file("ModelInterface",
-                                           "batch-prototype.xml",
-                                           package="rgcam"))

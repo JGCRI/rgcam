@@ -4,10 +4,15 @@
 \alias{loadProject}
 \title{Load a project data file.}
 \usage{
-loadProject(projFile)
+loadProject(proj)
 }
 \arguments{
-\item{projFile}{The file to load the data from.}
+\item{proj}{Project to add extracted results to.  Can be either a project
+data structure or the name of a project data file.  The file will be created
+if it doesn't already exist.}
+}
+\value{
+The project dataset which may or may not have acutally had to be loaded.
 }
 \description{
 This function will load a project data file and return the project data

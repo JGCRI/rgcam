@@ -5,7 +5,8 @@
 \title{Add a scenario from a GCAM output database to a project data set}
 \usage{
 addScenario(conn, proj, scenario = NULL, queryFile = NULL,
-  clobber = FALSE, transformations = NULL, migabble = NULL)
+  clobber = FALSE, transformations = NULL, saveProj = TRUE,
+  saveProjEach = FALSE, migabble = NULL)
 }
 \arguments{
 \item{conn}{A GCAM database to connection extract scenario from.}
@@ -25,6 +26,15 @@ name; otherwise, fail if \code{scenario} already exists in the data set.}
 
 \item{transformations}{Transformation functions to apply to the queries (see
 details).}
+
+\item{saveProj}{A flag to save the project to disk after data has been added.
+A user may want to avoid it if they are for instance calling this method several
+times and would prefer to save at the end.  Users can always save at anytime by
+calling \code{saveProject}.}
+
+\item{saveProjEach}{A flag to save the project to disk after each query has
+completed. This would be useful if a user suspects a failure in the middle
+of running queries and would like to not loose progress made.}
 
 \item{migabble}{Control what happens to the model interface console output.
 This is passed to the stdout/stderr argument of \code{system2}.  Default is

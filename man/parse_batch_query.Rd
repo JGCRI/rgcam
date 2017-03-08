@@ -18,4 +18,3 @@ the list of regions to query and the query text.
 Parse a Model Interface batch query file so each aQuery can get sent to be
 run individually.
 }
-\keyword{internal}

@@ -49,11 +49,18 @@
 #' @param clobber Flag: if \code{TRUE}, then the operation can replace a query
 #' in an existing scenario from the data set.  If \code{FALSE}, then attempting
 #' to replace an existing query will cause the entire operation to fail.
+#' @param transformation Transformation function to the data after it has been
+#' cleaned up but before it has been added to the project.
+#' @param saveProj A flag to save the project to disk after data has been added.
+#' A user may want to avoid it if they are for instance calling this method several
+#' times and would prefer to save at the end.  Users can always save at anytime by
+#' calling \code{saveProject}.
 #' @param strict.rundate Flag: if \code{TRUE}, then require that the run dates
 #' match in order to add queries to a scenario, and fail the entire operation if
 #' they don't.  If \code{FALSE}, then ignore dates in the new data set.
 #' @export
 addQueryTable <- function(project, qdata, queryname, clobber=FALSE,
+                          transformation=NULL, saveProj=TRUE,
                           strict.rundate=FALSE)
 {
     ## Check to see if either of the inputs are file names and if so replace
@@ -62,9 +69,7 @@ addQueryTable <- function(project, qdata, queryname, clobber=FALSE,
         qdata <- read.csv(qdata, row.names=FALSE)
     }
 
-    if(is.character(project)) {
-        project <- loadProject(project)
-    }
+    project <- loadProject(project)
 
     ## standardize the case of column names.
     qdata <- stdcase(qdata)
@@ -81,6 +86,10 @@ addQueryTable <- function(project, qdata, queryname, clobber=FALSE,
         qdata <- dplyr::mutate(qdata, rundate=NA)
     }
 
+    if(!is.null(transformation)) {
+        qdata <- transformation(qdata)
+    }
+
     qdsplit <- split(qdata, qdata[['scenario']])
 
     for(scenario in names(qdsplit)) {
@@ -88,8 +97,7 @@ addQueryTable <- function(project, qdata, queryname, clobber=FALSE,
         if(! scenario %in% listScenarios(project)) {
             warning('Scenario ', scenario,
                     ' does not exist in this project.  Creating.')
-            project <- c(project, list())
-            names(project) <- c(names(project), scenario)
+            project[[scenario]] <- list()
         }
 
         scenqdata <- qdsplit[[scenario]]
@@ -134,6 +142,8 @@ addQueryTable <- function(project, qdata, queryname, clobber=FALSE,
     }
     ## If we make it here, then all scenarios have been successfully added.
     ## Save the project back to its permanent storage.
-    saveProject(project)
+    if(saveProj) {
+        saveProject(project)
+    }
     project                             # remove the 'invisible' attribute
 }

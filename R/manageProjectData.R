@@ -25,33 +25,63 @@
 #' Despite these checks, it is possible to construct a data set that passes and
 #' yet still contains bad data.  When in doubt load the file directly and check
 #' to see that it contains the data you expect it to.
-#' @param projFile The file to load the data from.
+#' @param proj Project to add extracted results to.  Can be either a project
+#' data structure or the name of a project data file.  The file will be created
+#' if it doesn't already exist.
+#' @return The project dataset which may or may not have acutally had to be loaded.
 #' @export
-loadProject <- function(projFile) {
-    load(projFile)                  # Loads the variable prjdata.
-    if(!exists("prjdata", inherits=FALSE)) {
-        ## Something went wrong with the load.  Probably projFile exists but
-        ## isn't a valid project file.
-        message(paste("File", projFile,
-                      "does not contain valid project data."))
-        message("Try loading the file into an R session and verify that it contains the variable 'prjdata'.")
-        stop("Unable to load project file ", projFile)
-    }
+loadProject <- function(proj) {
 
-    stat <- project.valid(prjdata)
-    if(stat != 0) {
-        stop("Invalid project data in ",
-                   projFile,".  Validation failed at step", stat)
-    }
+    if(is.character(proj)) {
+        projFile <- proj
+        if(file.exists(projFile)) {
+            projFile <- normalizePath(projFile)
+            if(file.access(projFile, mode=6)!=0) { # 6 == read and write permission
+                ## file.access returns 0 on success
+                stop("File ", projFile,
+                     " exists but lacks either read or write permission.")
+            }
+            load(projFile)                  # Loads the variable prjdata.
+            if(!exists("prjdata", inherits=FALSE)) {
+                ## Something went wrong with the load.  Probably projFile exists but
+                ## isn't a valid project file.
+                message(paste("File", projFile,
+                              "does not contain valid project data."))
+                message("Try loading the file into an R session and verify that it contains the variable 'prjdata'.")
+                stop("Unable to load project file ", projFile)
+            }
 
-    ## Check the file name stored in the data.
-    if(is.null(attr(prjdata,"file")) || attr(prjdata, "file") != projFile) {
-        ## This generally means that the file has been moved or renamed
-        ## since it was written.  Notify the user, but it's not an error.
-        message("Project file name (",
-                projFile,") does not match the name recorded in the data (",
-                attr(prjdata,'file'), ").  Updating to match new file name.")
-        attr(prjdata, 'file') <- projFile
+            stat <- project.valid(prjdata)
+            if(stat != 0) {
+                stop("Invalid project data in ",
+                     projFile,".  Validation failed at step", stat)
+            }
+
+            ## Check the file name stored in the data.
+            if(is.null(attr(prjdata,"file")) || attr(prjdata, "file") != projFile) {
+                ## This generally means that the file has been moved or renamed
+                ## since it was written.  Notify the user, but it's not an error.
+                message("Project file name (",
+                        projFile,") does not match the name recorded in the data (",
+                        attr(prjdata,'file'), ").  Updating to match new file name.")
+                attr(prjdata, 'file') <- projFile
+            }
+        }
+        else {
+            prjdata <- list()
+            save(prjdata, file=projFile)    # have to create file to use normalizePath
+            projFile <- normalizePath(projFile)
+            attr(prjdata, 'file') <- projFile
+            unlink(projFile)            # ...but we don't actually want to
+            # create the file unless we succeed.
+        }
+    }
+    else if(project.valid(proj) %in% c(0, 2)) {
+        projFile <- attr(proj,'file')
+        prjdata <- proj
+    }
+    else {
+        stop("addScenario: invalid object passed as proj argument; proj must be a filename or project data object.")
     }
 
     prjdata
