@@ -236,6 +236,7 @@ getRundates <- function(projData, scenarios=NULL)
 #' @param query The name of the query to extract.
 #' @param scenarios Vector of scenario names.  If NULL, use all scenarios in the
 #' data set.
+#' @importFrom dplyr bind_rows
 #' @export
 getQuery <- function(projData, query, scenarios=NULL) {
     if(is.null(scenarios)) {
@@ -248,7 +249,7 @@ getQuery <- function(projData, query, scenarios=NULL) {
 
     queries <- lapply(scenarios, function(s) {projData[[s]][[query]]})
 
-    do.call(rbind, queries)
+    bind_rows(queries)
 }
 
 #' Drop specified queries from scenarios.
