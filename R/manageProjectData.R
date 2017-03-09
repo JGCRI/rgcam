@@ -131,6 +131,50 @@ saveProject <- function(prjdata, file=NULL) {
     invisible(prjdata)
 }
 
+#' Merge a list projects into a single project
+#'
+#' Users can use this function to collapse multiple project into a single
+#' project.  This could be useful for instance to import someone else's
+#' data into your project.  A user must explicitly specify the new name
+#' the new project will recieve.  In addition they can control what
+#' happens with scenario/query collisions with the \code{clobber} param.
+#'
+#' @param prjname The name of a project data file for the merged project.
+#' @param prjlist A list of projects that need to be merged together.  Note
+#' each project will be run through \code{\link{loadProject}} in case it has
+#' not yet been loaded.
+#' @param clobber If \code{TRUE}, overwrite any existing scenario of the same
+#' name; otherwise, fail if scenario/query already exists in the data set.
+#' @param saveProj A flag to save the project to disk after data has been added.
+#' A user may want to avoid it if they are for instance calling this method several
+#' times and would prefer to save at the end.  Users can always save at anytime by
+#' calling \code{saveProject}.
+#' @return The project dataset with the projects merged.
+#' @export
+mergeProjects <- function(prjname, prjlist, clobber=FALSE, saveProj=TRUE) {
+    finalproj <- loadProject(prjname)
+
+    # for loops!
+    for(prj in prjlist) {
+        prjdata <- loadProject(prj)
+        for(scn in names(prjdata)) {
+            for(qn in names(prjdata[[scn]])) {
+                if(!clobber && !is.null(finalproj[[scn]]) && !is.null(finalproj[[scn]][[qn]])) {
+                    warning(paste("Skipping data in",scn,"/",qn,"as clobber is false."))
+                } else {
+                    finalproj[[scn]][[qn]] <- prjdata[[scn]][[qn]]
+                }
+            }
+        }
+    }
+
+    if(saveProj) {
+        saveProject(finalproj)
+    }
+
+    finalproj
+}
+
 #' List the scenarios in a project data set
 #'
 #' Return the names of the scenarios available in a project data set.  The input
