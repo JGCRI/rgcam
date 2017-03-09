@@ -27,16 +27,16 @@ runQuery <- function(dbConn, query, scenarios, regions) UseMethod("runQuery")
 #' In addition we require the path in which the databases reside and (TODO:
 #' optionally?) the name of the database to query.
 #'
-#' @param miclasspath Java class path for the GCAM Model Interface.
 #' @param dbPath The path in which the BaseX DBs are located.
 #' @param dbFile GCAM database to extract scenario from.
-#' @param migabble Control what happens to the model interface console output.
-#' This is passed to the stdout/stderr argument of \code{system2}.  Default is
-#' to discard.
+#' @param miclasspath Java class path for the GCAM Model Interface.
 #' @return A connection to a local BaseX databasse which can be used to run
 #' queries.
 #' @export
-localDBConn <- function(miclasspath, dbPath, dbFile) {
+localDBConn <- function(dbPath, dbFile, miclasspath=NULL) {
+    if(is.null(miclasspath)) {
+        miclasspath = DEFAULT.MICLASSPATH
+    }
     db_inst <- structure(
         list(miclasspath=miclasspath, dbPath=dbPath, dbFile=dbFile),
         class="localDBConn")
