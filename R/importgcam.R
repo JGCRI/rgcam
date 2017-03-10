@@ -174,8 +174,6 @@ addScenario <- function(dbFile, proj, scenario=NULL, queryFile=NULL,
 #' object.  The results are returned as a list with elements 'scenario' and
 #' 'date'.
 #'
-#' This function assumes that it can split the
-#'
 #' @param scenstr The scenario string.  This may be a vector, such as the
 #' 'scenario' column in a table of GCAM results
 #' @return \code{list(scenario=Scenario_strings, date=Dates)}
@@ -185,8 +183,10 @@ sep.date <- function(scenstr) {
     scenario <- mtx[,1]
     havedate <- mtx[,2] != ''
     date <- rep(as.POSIXct(NA), length(mtx[,2]))
-    date[havedate] <- lubridate::ydm_hms(mtx[havedate,2]) # Don't try to do this
+    if(any(havedate)) {
+        date[havedate] <- lubridate::ydm_hms(mtx[havedate,2]) # Don't try to do this
                                         # with ifelse, or you will be sad.
+    }
     list(scenario=scenario, date=date)
 }
 
