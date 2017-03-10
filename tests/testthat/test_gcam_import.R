@@ -24,6 +24,11 @@ test_that('Data file is not created on error.', {
               expect_false(file.exists(file.valid))
           })
 
+test_that('Passing an invalid object is an error.', {
+              expect_error(addScenario(SAMPLE.GCAMDB, NULL),
+                           'invalid object')
+          })
+
 test_that('Data can be imported from GCAM database.', {
               prj <- addScenario(SAMPLE.GCAMDB, file.valid)
               attr(prj,'file') <- 'TEST' # because this is a tempfile, suppress
@@ -35,6 +40,9 @@ test_that('Data can be imported from GCAM database.', {
 
 ## file.valid now exists
 test_that('Clobber argument to addScenario works.', {
+              expect_message(prj <- addScenario(SAMPLE.GCAMDB, file.valid,
+                                                scenario='Reference-filtered'),
+                             'already exists in the data set')
               expect_message(prj <- addScenario(SAMPLE.GCAMDB, file.valid),
                              'clobber')
               attr(prj,'file') <- 'TEST'
