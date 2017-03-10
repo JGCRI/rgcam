@@ -2,6 +2,7 @@
 
 export(addQueryTable)
 export(addScenario)
+export(diffScenarios)
 export(dropQueries)
 export(dropScenarios)
 export(getQuery)

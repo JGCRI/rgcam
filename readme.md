@@ -60,3 +60,12 @@ queries <- listQueries(project.data, 'scenario-name')
 gdp.rgn <- getQuery(prj, 'GDP by region')
 ```
 
+## Getting Help
+
+rgcam is under active development.  If you have trouble installing it,
+or if you notice a problem while running,
+[check the issues](https://github.com/JGCRI/rgcam/issues?utf8=%E2%9C%93&q=is%3Aissue)
+list; we may have a solution for you.  If we don't, then open a new
+issue.  Describe what you did, what you thought should have happened,
+and what happened instead, and we'll help you figure out what went
+wrong.
