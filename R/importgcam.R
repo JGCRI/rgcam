@@ -356,7 +356,7 @@ addMIBatchCSV <- function(fn, proj, clobber=FALSE, transformations=NULL,
     }
 
     if(saveProj) {
-        saveProject(prjdata)
+        saveProject(proj)
     }
 
     proj
@@ -377,10 +377,15 @@ parse_batch_query <- function(fn) {
         ret <- list()
         ret$regions <- xml_text(xml_find_all(a_query, "./region/@name"))
         ret$query <- xml_find_first(a_query, "./*[@title]")
+        ret$title <- xml_attr(ret$query,"title")
+        # turn the query into text so we do not need to worry about
+        # errors such as "external pointer is not valid" if the xml2
+        # library gets reloaded
+        ret$query <- as.character(ret$query)
         return(ret)
     })
     names(query_list) <- sapply(query_list, function(a_query) {
-        xml_attr(a_query$query,"title")
+        a_query$title
     })
 
     return(query_list)
