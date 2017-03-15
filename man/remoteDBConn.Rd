@@ -4,12 +4,10 @@
 \alias{remoteDBConn}
 \title{Create a connection to a remote database that can be use to run queries on.}
 \usage{
-remoteDBConn(address, port, username, password, dbFile)
+remoteDBConn(dbFile, username, password, address = "localhost", port = 8984)
 }
 \arguments{
-\item{address}{The server address such as IP or domain name address.}
-
-\item{port}{The server port.}
+\item{dbFile}{GCAM database to extract scenario from.}
 
 \item{username}{A username configured with READ access on the remote BaseX
 database server.}
@@ -17,7 +15,11 @@ database server.}
 \item{password}{The password for the said username. WARNING: currently just
 stored and sent as plain text, does BaseX even support https?}
 
-\item{dbFile}{GCAM database to extract scenario from.}
+\item{address}{The server address such as IP or domain name address.  Default
+is "localhost"}
+
+\item{port}{The server port.  The default is 8984, the same as the default
+used by BaseX.}
 }
 \value{
 A connection to a remote BaseX databasse which can be used to run

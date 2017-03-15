@@ -16,7 +16,7 @@ as a query string that will result in XML such as:
 
 \item{scenarios}{An array of scenarios to query. TODO: more about syntax}
 
-\item{regions}{An array of regions to query. TODO: allow null to mean all?}
+\item{regions}{An array of regions to query. An empty list will imply "all-regions".}
 }
 \value{
 A data.frame with the results.  TODO: what about errors?

@@ -18,8 +18,9 @@ A connection to a local BaseX databasse which can be used to run
 queries.
 }
 \description{
-In order to establish a so called connection, really we track the location
-files as well) which is the classpath TODO: link to documentation and syntax
-In addition we require the path in which the databases reside and (TODO:
-optionally?) the name of the database to query.
+In order to establish we require the path in which the databases reside and
+the name of the database to query.  Optionally you can specify a Java
+classpath minimally including the ModelInterface.jar and BaseX.jar.  If no
+classpath is given the version of ModelInterface and BaseX included in this
+package will be used.
 }

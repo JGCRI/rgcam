@@ -13,7 +13,7 @@
 #' as a query string that will result in XML such as:
 #' \code{collection('../output/queries/Main_queries.xml')//*[@title='Cogeneration by sector']}
 #' @param scenarios An array of scenarios to query. TODO: more about syntax
-#' @param regions An array of regions to query. TODO: allow null to mean all?
+#' @param regions An array of regions to query. An empty list will imply "all-regions".
 #' @return A data.frame with the results.  TODO: what about errors?
 #' @export
 runQuery <- function(dbConn, query, scenarios, regions) UseMethod("runQuery")
@@ -21,11 +21,11 @@ runQuery <- function(dbConn, query, scenarios, regions) UseMethod("runQuery")
 
 #' Create a connection to a local database that can be use to run queries on.
 #'
-#' In order to establish a so called connection, really we track the location
-#" of all the ModelInterface and BaseX Java Jar files (and their dependent jar
-#' files as well) which is the classpath TODO: link to documentation and syntax
-#' In addition we require the path in which the databases reside and (TODO:
-#' optionally?) the name of the database to query.
+#' In order to establish we require the path in which the databases reside and
+#' the name of the database to query.  Optionally you can specify a Java
+#' classpath minimally including the ModelInterface.jar and BaseX.jar.  If no
+#' classpath is given the version of ModelInterface and BaseX included in this
+#' package will be used.
 #'
 #' @param dbPath The path in which the BaseX DBs are located.
 #' @param dbFile GCAM database to extract scenario from.
@@ -82,17 +82,19 @@ runQuery.localDBConn <- function(dbConn, query, scenarios, regions) {
 #' server which as read access.
 #' In addition we require TODO: optionally?) the name of the database to query.
 #'
-#' @param address The server address such as IP or domain name address.
-#' @param port The server port.
+#' @param dbFile GCAM database to extract scenario from.
 #' @param username A username configured with READ access on the remote BaseX
 #' database server.
 #' @param password The password for the said username. WARNING: currently just
 #' stored and sent as plain text, does BaseX even support https?
-#' @param dbFile GCAM database to extract scenario from.
+#' @param address The server address such as IP or domain name address.  Default
+#' is "localhost"
+#' @param port The server port.  The default is 8984, the same as the default
+#' used by BaseX.
 #' @return A connection to a remote BaseX databasse which can be used to run
 #' queries.
 #' @export
-remoteDBConn <- function(address, port, username, password, dbFile) {
+remoteDBConn <- function(dbFile, username, password, address="localhost", port=8984 ) {
     db_inst <- structure(
         list(address=address, port=port, username=username, password=password, dbFile=dbFile),
         class="remoteDBConn")
@@ -104,7 +106,7 @@ remoteDBConn <- function(address, port, username, password, dbFile) {
 
 #' Run query specialization for remote databases
 #' @export
-#' @importFrom httr POST http_error content
+#' @importFrom httr POST authenticate http_error content
 #' @importFrom dplyr %>% group_by_ summarize ungroup
 runQuery.remoteDBConn <- function(dbConn, query, scenarios, regions) {
     xqScenarios <- ifelse(length(scenarios) == 0, "()", paste0("('", paste(scenarios, collapse="','"), "')"))
@@ -119,10 +121,9 @@ runQuery.remoteDBConn <- function(dbConn, query, scenarios, regions) {
             '<rest:parameter name="media-type" value="text/csv"/>',
             '<rest:parameter name="csv" value="header=yes"/>',
         '</rest:query>' )
-    url <- paste0("http://", dbConn$username, ":", dbConn$password, "@",
-                  dbConn$address, ':', dbConn$port, "/rest/", dbConn$dbFile)
+    url <- paste0("http://", dbConn$address, ':', dbConn$port, "/rest/", dbConn$dbFile)
 
-    response <- POST(url, body=restQuery)
+    response <- POST(url, config=authenticate(dbConn$username, dbConn$password), body=restQuery )
 
     # error if the POST did not return with a success
     if(http_error(response)) {
