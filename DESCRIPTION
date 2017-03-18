@@ -11,7 +11,7 @@ Description: This package provides tools for extracting data from GCAM
     cleaning out unneeded scenarios).  The data structures created and
     loaded by this package are compatible with the GCAM analysis tools
     written and supported by the GCAM team.
-SystemRequirements: Java (>= 1.6.0)
+SystemRequirements: Java (>= 1.7.0)
 Depends:
     R (>= 3.2.3)
 License: GPL-2
@@ -24,6 +24,8 @@ Imports:
     httr,
     xml2
 RoxygenNote: 6.0.1
-Suggests: testthat
 Suggests: testthat,
-    covr
+    covr,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

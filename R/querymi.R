@@ -69,7 +69,7 @@ runQuery.localDBConn <- function(dbConn, query, scenarios, regions) {
     # The results for runMIQuery have not been aggregated (if for instance we are querying by region)
     # so we should do that now.
     results <- results %>%
-        group_by_(.dots=names(results)[names(results) != "value"]) %>%
+        group_by_(.dots=paste0('`',names(results)[names(results) != "value"],'`')) %>%
         summarize(value=sum(value)) %>% ungroup()
     return(results)
 }
@@ -134,7 +134,7 @@ runQuery.remoteDBConn <- function(dbConn, query, scenarios, regions) {
     # The results for runMIQuery have not been aggregated (if for instance we are querying by region)
     # so we should do that now.
     results <- results %>%
-        group_by_(.dots=names(results)[names(results) != "value"]) %>%
+        group_by_(.dots=paste0('`',names(results)[names(results) != "value"],'`')) %>%
         summarize(value=sum(value)) %>% ungroup()
     return(results)
 }

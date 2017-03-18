@@ -20,6 +20,12 @@
          <comments/>
       </ClimateQuery>
       </queryGroup>
+      <query title="Land Use Change Emission">
+         <axis1 name="land-use-change-emission">LandLeaf</axis1>
+         <axis2 name="Year">land-use-change-emission[@year]</axis2>
+         <xPath buildList="true" dataName="land-use-change-emission" group="false" sumAll="true">/LandNode[@name='root' or @type='LandNode' (: collapse :)]//land-use-change-emission/text()</xPath>
+         <comments/>
+      </query>
 
       <queryGroup name="not working">
 
@@ -52,17 +58,17 @@
 	       			 	  				}
 	       				}
 	       	 		 (: I can get by with just the scenario and region
-	       			 let $new_node := element {local-name($parent)} {$parent/@*, $append} 	
+	       			 let $new_node := element {local-name($parent)} {$parent/@*, $append}
 	       	 		 return
 	       	 		 if(local-name($parent) != 'scenario')
 	       	 		 then local:append-heirarchy($parent/parent::*, $new_node)
 	       	 		 else document { $new_node } :)
-	       	 	 }; 
+	       	 	 };
 	       	 	 declare function local:generate-sector-output-coefs($inputNameQueue as xs:string*, $currTree as node(), $coefs as node()*, $is_usa as xs:boolean) as node()* {
                  if(empty($inputNameQueue)) then $coefs
                  else if( exists($coefs[@name = $inputNameQueue[1]]) or exists(index-of(('unconventional oil production', "electricity", "cement", "N fertilizer"),
 $inputNameQueue[1])) or not($currTree/*[@type='sector' and @name=$inputNameQueue[1]]))
-then 
+then
 local:generate-sector-output-coefs(remove($inputNameQueue, 1), $currTree, $coefs, $is_usa)
 	       				else
                     let $inputName := $inputNameQueue[1],
@@ -92,7 +98,7 @@ local:generate-sector-output-coefs(remove($inputNameQueue, 1), $currTree, $coefs
                                                               }
                                                     }
                                         }
-                        return 
+                        return
                               local:generate-sector-output-coefs(distinct-values(($newInputNameQueue, $useSectors)), $currTree, $new_coefs, $is_usa)
 		};
         declare function local:apply-coefs($outputName as xs:string, $emissions as node()*, $coefs as node()*) as node()* {
@@ -127,22 +133,22 @@ local:generate-sector-output-coefs(remove($inputNameQueue, 1), $currTree, $coefs
                     $emissions:)
                 }
         };
-		declare function local:run-emiss-by-enduse($scenarios as xs:string*, $regions as xs:string*, $collection as xs:string) as node()* { 	
-			 	 unordered { 	
+		declare function local:run-emiss-by-enduse($scenarios as xs:string*, $regions as xs:string*, $collection as xs:string) as node()* {
+			 	 unordered {
 			 	 let $regionsG := if(not($regions[1] = 'Global'))
 			 	 		  then $regions
 			 	 		  else distinct-values(collection($collection)/scenario/world/*[@type='region']/@name)
 			 	 return
-			 	 for $scenario in $scenarios, 	    
-			 	 $region in $regionsG 	
-			 	 let $scenario_split := tokenize($scenario, ' '), 	    
+			 	 for $scenario in $scenarios,
+			 	 $region in $regionsG
+			 	 let $scenario_split := tokenize($scenario, ' '),
 				 $currTree := collection($collection)/scenario[@name = $scenario_split[1] and @date = $scenario_split[2]]/world/*[@type='region' and @name=$region],
                  $currEmissSectors := $currTree/*[@type='sector' and descendant::CO2],
                  $coefs := local:generate-sector-output-coefs(distinct-values($currEmissSectors/@name), $currTree, (), false())
 				 return
 				    for $sectorName in distinct-values($currEmissSectors/@name)
                     return local:append-heirarchy($currTree, local:apply-coefs($sectorName, $currEmissSectors[@name=$sectorName]//CO2/emissions, $coefs))//text()
-			 	 } 
+			 	 }
 	 	 };
 		 local:run-emiss-by-enduse((:scenarios:), (:regions:), (:collection:))
                </xPath>
@@ -180,7 +186,7 @@ local:generate-sector-output-coefs(remove($inputNameQueue, 1), $currTree, $coefs
       	  <axis2 name="Year">emissions</axis2>
       	  <xPath buildList="true" dataName="emissions" group="false" sumAll="false">*[@type = 'sector' (:collapse:)]//*[@type = 'GHG' and ((@name='CO2') )]/emissions/node()</xPath>
       	  <comments/>
-	</emissionsQueryBuilder> 
+	</emissionsQueryBuilder>
 <!--      </aQuery>    -->
 
 <!-- <aQuery>
@@ -193,7 +199,7 @@ local:generate-sector-output-coefs(remove($inputNameQueue, 1), $currTree, $coefs
       </supplyDemandQuery>
 <!--   </aQuery> -->
 
-<!--      
+<!--
    <aQuery>
       <region name="USA" />
        <region name="Canada" />
@@ -241,6 +247,6 @@ local:generate-sector-output-coefs(remove($inputNameQueue, 1), $currTree, $coefs
        </supplyDemandQuery>
 <!--   </aQuery> -->
 
-      
+
       </queryGroup>
 </queries>

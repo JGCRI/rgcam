@@ -20,11 +20,12 @@ To install rgcam, open an R session and run
 ```R
 install_github('JGCRI/rgcam')
 ```
-The package includes a copy of the GCAM Model
-Interface (current as of GCAM v. 4.3), so it is not necessary to have
+The package includes a copy of the GCAM Model Interface and BaseX
+library (with a version TODO), so it is not necessary to have
 it otherwise installed or configured.  You will need a version of Java
-that can run the Model Interface.  The package has been tested with
-Java 1.6.0, and should work with any Java version more recent than that.
+that can run the Model Interface which now require a minimum of Java
+version of 1.7*.  Note you do not need Java installed if you do not
+need to run queries on a "local" database, see TODO for more details.
 
 ## Usage
 
@@ -33,12 +34,13 @@ function.  You will need a GCAM output database and an XML file
 containing the queries that you want to extract from it.  You could
 then get started by running, for example:
 ```R
-prj <- addScenario('my-gcamdb_basexdb', 'my-project-name.dat',
-                   'my-scenario-name', 'my-queries.xml')
+conn <- localDBConn('/path/to/dbs', 'my-gcamdb_basexdb')
+prj <- addScenario(conn, 'my-project-name.dat', 'my-scenario-name'
+                   'my-batch-queries.xml')
 ```  
-This command would run the queries in `my-queries.xml` against the
+This command would run the queries in `my-batch-queries.xml` against the
 database `my-gcamdb_basexdb`, extract the results for a scenario called
-"scenario-name", and write the results to a file called "project.dat".
+"my-scenario-name", and write the results to a file called "my-project-name.dat".
 If you have other scenarios, whether in the same database or a
 different one, you can make additional calls to `addScenario` to add
 them to the project data.  The results are also returned and assigned

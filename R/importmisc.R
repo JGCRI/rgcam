@@ -130,7 +130,7 @@ addQueryTable <- function(project, qdata, queryname, clobber=FALSE,
                 project[[scenario]][[queryname]] <- scenqdata
             }
             else {
-                stop('addQueryTable: query ', queryname,
+                warning('addQueryTable: query ', queryname,
                      ' already exists for scenario ', scenario,
                      ' and noclobber is set.')
             }

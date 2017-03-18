@@ -165,7 +165,7 @@ addScenario <- function(conn, proj, scenario=NULL, queryFile=NULL,
 #'
 #' # However it could also be given for instance as a query string that will result in such XML:
 #' query_name <- "CO2 emissions by region"
-#' co2_query <- paste0("file('~gcam/output/queries/Main_queries.xml')//*[@title='",
+#' co2_query <- paste0("doc('~gcam/output/queries/Main_queries.xml')//*[@title='",
 #'                     query_name, "']")
 #' addSingleQuery(db_connection, "test.proj", query_name, co2_query, "Reference")
 #'
