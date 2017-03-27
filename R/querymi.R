@@ -30,15 +30,20 @@ runQuery <- function(dbConn, query, scenarios, regions) UseMethod("runQuery")
 #' @param dbPath The path in which the BaseX DBs are located.
 #' @param dbFile GCAM database to extract scenario from.
 #' @param miclasspath Java class path for the GCAM Model Interface.
+#' @param migabble Control what happens to the model interface console output.
+#' Default is to discard.
 #' @return A connection to a local BaseX databasse which can be used to run
 #' queries.
 #' @export
-localDBConn <- function(dbPath, dbFile, miclasspath=NULL) {
+localDBConn <- function(dbPath, dbFile, miclasspath=NULL, migabble=NULL) {
     if(is.null(miclasspath)) {
         miclasspath = DEFAULT.MICLASSPATH
     }
+    if(is.null(migabble)) {
+        migabble <- TRUE
+    }
     db_inst <- structure(
-        list(miclasspath=miclasspath, dbPath=dbPath, dbFile=dbFile),
+        list(miclasspath=miclasspath, dbPath=dbPath, dbFile=dbFile, migabble=migabble),
         class="localDBConn")
 
     # TODO: ensure this connection is working
@@ -58,6 +63,7 @@ runQuery.localDBConn <- function(dbConn, query, scenarios, regions) {
         paste("-cp", dbConn$miclasspath),
         "-Xmx2g", #TODO: memory limits?
         paste0("-Dorg.basex.DBPATH=", dbConn$dbPath),
+        paste0("-DModelInterface.SUPPRESS_OUTPUT=", dbConn$migabble),
         "org.basex.BaseX",
         "-smethod=csv",
         "-scsv=header=yes",
@@ -65,7 +71,13 @@ runQuery.localDBConn <- function(dbConn, query, scenarios, regions) {
         shQuote(paste0("import module namespace mi = 'ModelInterface.ModelGUI2.xmldb.RunMIQuery';",
                        "mi:runMIQuery(", query, ",", xqScenarios, ",", xqRegion, ")"))
         )
-    results <- read_csv(pipe(paste(cmd, collapse=" ")))
+    if(dbConn$migabble) {
+        suppress_col_spec <- readr::cols()
+    }
+    else {
+        suppress_col_spec <- NULL
+    }
+    results <- read_csv(pipe(paste(cmd, collapse=" ")), col_types=suppress_col_spec)
     # The results for runMIQuery have not been aggregated (if for instance we are querying by region)
     # so we should do that now.
     results <- results %>%

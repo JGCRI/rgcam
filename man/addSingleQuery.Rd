@@ -5,8 +5,7 @@
 \title{Add a data by running a single on a GCAM output database to a project data set}
 \usage{
 addSingleQuery(conn, proj, qn, query, scenario = NULL, regions = NULL,
-  clobber = FALSE, transformations = NULL, saveProj = TRUE,
-  migabble = NULL)
+  clobber = FALSE, transformations = NULL, saveProj = TRUE)
 }
 \arguments{
 \item{conn}{A GCAM database to connection extract scenario from.}
@@ -36,10 +35,6 @@ details).}
 A user may want to avoid it if they are for instance calling this method several
 times and would prefer to save at the end.  Users can always save at anytime by
 calling \code{saveProject}.}
-
-\item{migabble}{Control what happens to the model interface console output.
-This is passed to the stdout/stderr argument of \code{system2}.  Default is
-to discard.}
 }
 \value{
 The project dataset with the new scenario added.
@@ -84,7 +79,7 @@ addSingleQuery(db_connection, "test.proj", query_name, co2_query, "Reference")
 
 # However it could also be given for instance as a query string that will result in such XML:
 query_name <- "CO2 emissions by region"
-co2_query <- paste0("file('~gcam/output/queries/Main_queries.xml')//*[@title='",
+co2_query <- paste0("doc('~gcam/output/queries/Main_queries.xml')//*[@title='",
                     query_name, "']")
 addSingleQuery(db_connection, "test.proj", query_name, co2_query, "Reference")
 

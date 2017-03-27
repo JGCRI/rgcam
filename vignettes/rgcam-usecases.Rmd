@@ -46,7 +46,7 @@ examples.proj <- addScenario(conn, examples.proj, "Reference-filtered", SAMPLE.Q
 
 ## Loading existing batch CSV output
 If you have already run the model interface and generated batch CSV file results that you would like to include in your project you can simply add them with:
-```{R, warning = FALSE}
+```{R, warning = FALSE, message = FALSE}
 sample_filename <- system.file("ModelInterface", "sample.csv",
                               package="rgcam")
 examples.proj <- addMIBatchCSV(sample_filename, examples.proj)
@@ -68,7 +68,7 @@ listQueries(examples.proj)
 
 ## Running a single query at a time
 If you just need to run a single query and don't want to bother writing a whole batch file you can use `addSingleQuery`.  You do need to provide the full XML syntax as found in the `Main_queries.xml` file.
-```{R}
+```{R, message = FALSE}
 query_name <- "Land Use Change Emission"
 luc_query <- '<query title="Land Use Change Emission">
          <axis1 name="land-use-change-emission">LandLeaf</axis1>
@@ -80,7 +80,7 @@ examples.proj <- addSingleQuery(conn, examples.proj, query_name, luc_query, c("R
 ```
 
 Although this may be a bit cumbersome.  An alternative, if you have access to a `Main_queries.xml` on the machine that is processing the queries, approach could be to query for the query.
-```{R}
+```{R, message = FALSE}
 query_name <- "Land Use Change Emission"
 luc_query_query <- paste0("doc('",
                           system.file("ModelInterface", "sample-queries-interactive.xml",
@@ -94,7 +94,7 @@ examples.proj <- addSingleQuery(conn, examples.proj, query_name, luc_query_query
 ```
 
 Alternatively you could use the `xml2` library to parse a query file and query for queries that way.  Such an approach might be useful if you have a query file locally but are running the queries on a remote DB connection.
-```{R}
+```{R, message = FALSE}
 queries <- xml2::read_xml(system.file("ModelInterface", "sample-queries-interactive.xml",
                               package="rgcam"))
 query_name <- "Land Use Change Emission"
@@ -220,7 +220,7 @@ batch_queries[[1]]
 
 ### Adding transformations
 Each of the add* methods allows a "transformation" which is just a function that takes one tibble and returns a "transformed" version of that tibble.  The transformation must at the very least maintain the `scneario` column.
-```{R}
+```{R, message = FALSE}
 add_global_sum <- function(data) {
     data %>% group_by_(.dots=paste0('`',names(data)[!(names(data) %in% c("region", "value"))],'`')) %>%
         mutate(value=sum(value)) %>% mutate(region="Global") %>% ungroup() %>%
@@ -246,7 +246,7 @@ Unfortunately there is no simple way to query across multiple databases so you m
 <Value write-output="1" append-scenario-name="1" name="xmldb-location">../output/db_</Value>
 ```
 
-You could the update the connection for each scenario for example:
+You could then update the connection for each scenario for example:
 ```R
 scenarios <- c("Ref_C",  "Ref_U",  "UCT100_C",  "UCT100_U")
 proj_list <- lapply(scenarios, function(scenario) {
@@ -257,7 +257,7 @@ proj_list <- lapply(scenarios, function(scenario) {
     # avoid re-running queries that we already have
     addScenario(conn, examples.proj, scenario, SAMPLE.QUERIES, saveProj=FALSE)
 })
-# We new need to merge each scenario back into a single project.
+# We now need to merge each scenario back into a single project.
 # mergeProjects will save the project in the end
 examples.proj <- mergeProjects(examples.proj, proj_list)
 ```

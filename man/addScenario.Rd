@@ -6,7 +6,7 @@
 \usage{
 addScenario(conn, proj, scenario = NULL, queryFile = NULL,
   clobber = FALSE, transformations = NULL, saveProj = TRUE,
-  saveProjEach = FALSE, migabble = NULL)
+  saveProjEach = FALSE)
 }
 \arguments{
 \item{conn}{A GCAM database to connection extract scenario from.}
@@ -35,10 +35,6 @@ calling \code{saveProject}.}
 \item{saveProjEach}{A flag to save the project to disk after each query has
 completed. This would be useful if a user suspects a failure in the middle
 of running queries and would like to not loose progress made.}
-
-\item{migabble}{Control what happens to the model interface console output.
-This is passed to the stdout/stderr argument of \code{system2}.  Default is
-to discard.}
 }
 \value{
 The project dataset with the new scenario added.

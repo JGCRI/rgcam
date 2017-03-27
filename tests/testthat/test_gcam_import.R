@@ -8,6 +8,11 @@ notdata <- list()
 save(notdata, file=file.bad)
 testtime <- lubridate::ymd_hm('1863-11-19 15:45',tz='EST')
 datestrfmt <- '%Y-%d-%m %H:%M:%S'
+SAMPLE.GCAMDBLOC <- system.file("extdata",
+                                package="rgcam")
+SAMPLE.QUERIES <- system.file("ModelInterface", "sample-queries.xml",
+                              package="rgcam")
+conn <- localDBConn(SAMPLE.GCAMDBLOC, "sample_basexdb")
 
 ## helper function for creating extra scenarios
 dup.scenario <- function(scen, newname) {
@@ -20,7 +25,8 @@ dup.scenario <- function(scen, newname) {
 test_that('Data file is not created on error.', {
               nosuchfile <- tempfile()
               expect_false(file.exists(nosuchfile))
-              expect_error(addScenario(nosuchfile, file.valid))
+              bad_conn <- localDBConn(tempdir(), nosuchfile)
+              expect_error(addScenario(bad_conn, file.valid))
               expect_false(file.exists(file.valid))
           })
 
@@ -30,7 +36,7 @@ test_that('Passing an invalid object is an error.', {
           })
 
 test_that('Data can be imported from GCAM database.', {
-              prj <- addScenario(SAMPLE.GCAMDB, file.valid)
+              prj <- addScenario(conn, file.valid)
               attr(prj,'file') <- 'TEST' # because this is a tempfile, suppress
                                         # the filename.
               expect_equal_to_reference(prj,
@@ -40,15 +46,15 @@ test_that('Data can be imported from GCAM database.', {
 
 ## file.valid now exists
 test_that('Clobber argument to addScenario works.', {
-              expect_message(prj <- addScenario(SAMPLE.GCAMDB, file.valid,
+              expect_warning(prj <- addScenario(conn, file.valid,
                                                 scenario='Reference-filtered'),
-                             'already exists in the data set')
-              expect_message(prj <- addScenario(SAMPLE.GCAMDB, file.valid),
+                             'already exists')
+              expect_warning(prj <- addScenario(conn, file.valid),
                              'clobber')
               attr(prj,'file') <- 'TEST'
               expect_equal_to_reference(prj, 'sample-prj.dat')
 
-              expect_silent(prj <- addScenario(SAMPLE.GCAMDB, file.valid,
+              expect_silent(prj <- addScenario(conn, file.valid,
                                                clobber=TRUE))
               attr(prj,'file') <- 'TEST'
               expect_equal_to_reference(prj, 'sample-prj.dat')
@@ -58,7 +64,7 @@ test_that('Clobber argument to addScenario works.', {
 
 test_that('File with bad permissions is detected.', {
               Sys.chmod(file.bad, '0000')
-              expect_error(addScenario(SAMPLE.GCAMDB, file.bad), 'exists')
+              expect_error(addScenario(conn, file.bad), 'exists')
               Sys.chmod(file.bad, '0666')
           })
 
@@ -71,7 +77,6 @@ test_that('loadProject works.', {
               attr(prj,'file') <- 'TEST'
               expect_equal_to_reference(prj, 'sample-prj.dat')
           })
-
 
 test_that('project info functions work.', {
               prj <- loadProject(file.valid)
@@ -144,17 +149,19 @@ test_that('query retrieval works.', {
 
               co2 <- getQuery(prj, 'CO2 concentrations')
               expect_true(is.data.frame(co2))
+              co2 <- tidyr::spread(co2, year,value)
               expect_equal(nrow(co2), 2)
               expect_equal(co2$scenario, c('Reference-filtered', 'Scenario2'))
-              expect_equal(co2$X2100, rep(738.939,2))
+              expect_equal(co2[["2100"]], rep(738.939,2))
               expect_equal(co2$Units, rep('PPM',2))
 
               ## single scenario query
               co2.single <- getQuery(prj, 'CO2 concentrations', 'Scenario2')
-              expect_true(is.data.frame(co2))
+              expect_true(is.data.frame(co2.single))
+              co2.single <- tidyr::spread(co2.single, year,value)
               expect_equal(nrow(co2.single), 1)
               expect_equal(co2.single$scenario, 'Scenario2')
-              expect_equal(co2.single$X2050, 507.433)
+              expect_equal(co2.single[["2050"]], 507.433)
 
               ## add a query to the second scenario that doesn't exist in the
               ## first.
@@ -162,9 +169,10 @@ test_that('query retrieval works.', {
                   prj[['Scenario2']][['CO2 concentrations']]
               foo <- getQuery(prj, 'foo') # all scenarios
               expect_true(is.data.frame(foo))
+              foo <- tidyr::spread(foo, year,value)
               expect_equal(nrow(foo), 1)
               expect_equal(foo$scenario, 'Scenario2')
-              expect_equal(foo$X2000, 364.147)
+              expect_equal(foo[["2000"]], 364.147)
           })
 
 ## This one modifies the temporary project file
@@ -173,7 +181,7 @@ test_that('scenario can be added to an already-loaded data set.', {
               ## rename the scenario so we can load it again
               prj[['Scenario2']] <- dup.scenario(prj[[1]], 'Scenario2')
               prj[[1]] <- NULL
-              prj <- addScenario(SAMPLE.GCAMDB, prj)
+              prj <- addScenario(conn, prj)
 
               expect_equal(length(prj), 2)
               expect_true('Reference-filtered' %in% listScenarios(prj))
@@ -290,7 +298,7 @@ test_that('addQueryTable works.', {
               prj2 <- prj               # so we can verify that prj2 is
                                         # unchanged on failure.
               ## replace with noclobber
-              expect_error(
+              expect_warning(
                   prj2 <- addQueryTable(prj, table1,
                                         testqueryname) )
               expect_equal(prj, prj2)
@@ -339,7 +347,7 @@ test_that('addQueryTable works.', {
               expect_true('scenario' %in% names(bctbl))
               expect_true('region' %in% names(bctbl))
               expect_true('Units' %in% names(bctbl))
-              expect_true('X2050' %in% names(bctbl))
+              expect_true('year' %in% names(bctbl))
 
               ## add to a file instead of a structure
               prj3 <- addQueryTable(altfile, table1, 'New Query3')
@@ -353,7 +361,6 @@ test_that('addQueryTable works.', {
               ## remove the tempfile
               unlink(altfile)
           })
-
 
 ### Cleanup
 unlink(file.valid)

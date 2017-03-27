@@ -58,17 +58,17 @@
 #' @param saveProjEach A flag to save the project to disk after each query has
 #' completed. This would be useful if a user suspects a failure in the middle
 #' of running queries and would like to not loose progress made.
-#' @param migabble Control what happens to the model interface console output.
-#' This is passed to the stdout/stderr argument of \code{system2}.  Default is
-#' to discard.
 #' @return The project dataset with the new scenario added.
 #' @export
 addScenario <- function(conn, proj, scenario=NULL, queryFile=NULL,
                         clobber=FALSE, transformations=NULL,
-                        saveProj=TRUE, saveProjEach=FALSE,
-                        migabble=NULL) {
+                        saveProj=TRUE, saveProjEach=FALSE) {
 
     prjdata <- loadProject(proj)
+
+    if(is.null(queryFile)) {
+        queryFile <- SAMPLE.QUERIES
+    }
 
     queries <- parse_batch_query(queryFile)
 
@@ -147,9 +147,6 @@ addScenario <- function(conn, proj, scenario=NULL, queryFile=NULL,
 #' A user may want to avoid it if they are for instance calling this method several
 #' times and would prefer to save at the end.  Users can always save at anytime by
 #' calling \code{saveProject}.
-#' @param migabble Control what happens to the model interface console output.
-#' This is passed to the stdout/stderr argument of \code{system2}.  Default is
-#' to discard.
 #' @return The project dataset with the new scenario added.
 #'
 #' @examples
@@ -180,7 +177,7 @@ addScenario <- function(conn, proj, scenario=NULL, queryFile=NULL,
 #' @export
 addSingleQuery <- function(conn, proj, qn, query, scenario=NULL, regions=NULL,
                            clobber=FALSE, transformations=NULL,
-                           saveProj=TRUE, migabble=NULL) {
+                           saveProj=TRUE) {
 
     prjdata <- loadProject(proj)
 

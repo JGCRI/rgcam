@@ -4,7 +4,7 @@
 \alias{localDBConn}
 \title{Create a connection to a local database that can be use to run queries on.}
 \usage{
-localDBConn(dbPath, dbFile, miclasspath = NULL)
+localDBConn(dbPath, dbFile, miclasspath = NULL, migabble = NULL)
 }
 \arguments{
 \item{dbPath}{The path in which the BaseX DBs are located.}
@@ -12,6 +12,9 @@ localDBConn(dbPath, dbFile, miclasspath = NULL)
 \item{dbFile}{GCAM database to extract scenario from.}
 
 \item{miclasspath}{Java class path for the GCAM Model Interface.}
+
+\item{migabble}{Control what happens to the model interface console output.
+Default is to discard.}
 }
 \value{
 A connection to a local BaseX databasse which can be used to run
