@@ -26,6 +26,7 @@ Imports:
 RoxygenNote: 6.0.1
 Suggests: testthat,
     covr,
+    parallel,
     knitr,
     rmarkdown
 VignetteBuilder: knitr

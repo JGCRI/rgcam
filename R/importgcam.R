@@ -224,6 +224,8 @@ addSingleQuery <- function(conn, proj, qn, query, scenario=NULL, regions=NULL,
 #' @param scenstr The scenario string.  This may be a vector, such as the
 #' 'scenario' column in a table of GCAM results
 #' @return \code{list(scenario=Scenario_strings, date=Dates)}
+#' @importFrom stringr str_split_fixed
+#' @importFrom lubridate ydm_hms
 #' @keywords internal
 sep.date <- function(scenstr) {
     mtx <- stringr::str_split_fixed(scenstr,',date=',2)

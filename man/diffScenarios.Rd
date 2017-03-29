@@ -60,4 +60,3 @@ you can pass the second data frame in the \code{data2} argument.  In this
 case, the \code{scenarios} argument will be ignored, and the difference will
 be computed as \code{data - data2}.
 }
-

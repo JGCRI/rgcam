@@ -9,12 +9,12 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-RGCAM provides methods that satisfy the typical usecase to get GCAM data out of an output XML database and into R so that a user can use it.  It provides a convient interface for doing so.  It provides these tools in a modular way so that you can build upon them to extend their capabitlities to suite your particular needs.  In this vingette we start with going through basic examples to highlight the features of the package.  Then slowly move into some usecases that are not directly handled by the package but these examples will show simple tweaks to cover those cases.
+RGCAM provides methods that satisfy the typical use case to get GCAM data out of an output XML database and into R so that a user can use it.  It provides a convenient interface for doing so.  It provides these tools in a modular way so that you can build upon them to extend their capabilities to suite your particular needs.  In this vignette we start with going through basic examples to highlight the features of the package.  Then slowly move into some use cases that are not directly handled by the package but these examples will show simple tweaks to cover those cases.
 
 ## Basic examples
 
-As we have seen in the package documentation examples the simplest way to get data into GCAM is to open a so called connection to a local database by sepecifying the path and name of the database.  Then calling `addScenario` to run a Model Interface batch query file:
-```{R}
+As we have seen in the package documentation examples the simplest way to get data into GCAM is to open a so called connection to a local database by specifying the path and name of the database.  Then calling `addScenario` to run a Model Interface batch query file:
+```{R, message = FALSE}
 library(rgcam)
 SAMPLE.GCAMDBLOC <- system.file("extdata",
                              package="rgcam")
@@ -105,9 +105,9 @@ examples.proj <- addSingleQuery(conn, examples.proj, query_name, luc_query,
 ```
 
 ### Running queries on a remote server
-Quite a common situation for GCAM users is they do their production runs on a compute cluster such as PIC and would like to do the analysis on their local machine.  Thus far users have had to run the queries on PIC and pull back the CSV batch file results.  This can be tedious especially if there are a lot of databases or new queries have to be made.  Alternatively they could copy back the databases to their local machine however this too can become prohibative with a large number of output databases.  For this usecase we add the ability to run queries on some remote database server.
+Quite a common situation for GCAM users is they do their production runs on a compute cluster such as PIC and would like to do the analysis on their local machine.  Thus far users have had to run the queries on PIC and pull back the CSV batch file results.  This can be tedious especially if there are a lot of databases or new queries have to be made.  Alternatively they could copy back the databases to their local machine however this too can become prohibitive with a large number of output databases.  For this use case we add the ability to run queries on some remote database server.
 
-The ability to run the databse as a server is functionality provided entirely by [BaseX](http://docs.basex.org/wiki/Main_Page).  The following is a convient shell script to run a server hosting datbases in a location given as the first argument.  Note when using BaseX in client/server mode a user account is neccessary, with READ access.  Again this helper script can help facilatate setting that up as well.
+The ability to run the database as a server is functionality provided entirely by [BaseX](http://docs.basex.org/wiki/Main_Page).  The following is a convenient shell script to run a server hosting databases in a location given as the first argument.  Note when using BaseX in client/server mode a user account is necessary, with READ access.  Again this helper script can help facilitate setting that up as well.
 
 ```bash
 #!/bin/sh
@@ -166,7 +166,7 @@ Note, to stop the server a user can again use the helper script providing just t
 [pralitp@constance03 ~]$ ./basex-server-helper.sh stop
 ```
 
-The server uses standard HTTP protocals to communicate using a "REST" api.  The host and ports are configured using the standard .basex config file.  NOTE: that many machines including PIC sit behind a firewall and will block access to the port 8984.  To work around this you can use ssh tunnelling to forward that particular port.
+The server uses standard HTTP protocols to communicate using a "REST" API.  The host and ports are configured using the standard .basex config file.  NOTE: that many machines including PIC sit behind a firewall and will block access to the port 8984.  To work around this you can use ssh tunneling to forward that particular port.
 ```bash
 # Note you should use the exact PIC login node that is running the server
 ssh -L 8984:localhost:8984 constance03
@@ -189,10 +189,10 @@ examples.proj <- addSingleQuery(remote_conn, examples.proj, query_name, co2_quer
 ```
 
 ### Decomposing the rgcam tools
-Generally using the add* methods provided should be sufficient for most user needs but the package also makes available the underly methods that could be useful if a user wants to do something a little be different.
+Generally using the add* methods provided should be sufficient for most user needs but the package also makes available the underlying methods that could be useful if a user wants to do something a little bit different.
 
-First the `runQuery` is a S3 generic method that can run a single query on either a local or remote database and returns a tibble.  It follows all of the same conventions as `addScenario` or `addSingleQuery` since those are just using this method under the hood.
-```{R}
+First `runQuery` is a S3 generic method that can run a single query on either a local or remote database and returns a tibble.  It follows all of the same conventions as `addScenario` or `addSingleQuery` since those are just using this method under the hood.
+```{R, message = FALSE}
 runQuery(conn, luc_query_query, c(), c("USA"))
 ```
 
@@ -240,7 +240,7 @@ getQuery(examples.proj, query_name)
 ```
 
 ### Scenarios in multiple databases
-Unfortunately there is no way to simply way to query accross multiple databases so you must provided a mapping and update the connection appropriately.  When running many GCAM runs in parallel on a cluster such as PIC it could be useful to set in the `configuration.xml`
+Unfortunately there is no simple way to query across multiple databases so you must provide a mapping and update the connection appropriately.  When running many GCAM runs in parallel on a cluster such as PIC it could be useful to set in the `configuration.xml`
 ```xml
 <!-- Note the append-scenario="1" ensures each db will have a unique name -->
 <Value write-output="1" append-scenario-name="1" name="xmldb-location">../output/db_</Value>
@@ -253,7 +253,7 @@ proj_list <- lapply(scenarios, function(scenario) {
     conn$dbFile <- paste0("db_", scenario)
     # Note we set saveProj=FALSE simply for performance reasons as we will just
     # save it at the end.
-    # We start with examples.proj (clobber is stil false by default) so we can
+    # We start with examples.proj (clobber is still false by default) so we can
     # avoid re-running queries that we already have
     addScenario(conn, examples.proj, scenario, SAMPLE.QUERIES, saveProj=FALSE)
 })
@@ -263,22 +263,22 @@ examples.proj <- mergeProjects(examples.proj, proj_list)
 ```
 
 ### Running queries in parallel
-Since each query is run in sequence and maybe you have a lot of queries+scenarios to run it maybe worth while to run queries in parallel.  The rgcam package does not provide facitlities to handle this explicitly however BaseX can handle parallel requests.  Thus we can use the `parallel` package to send requests in a `parLapply` instead of a regular `lapply`.
+Since each query is run in sequence and maybe you have a lot of queries+scenarios to run it maybe worth while to run queries in parallel.  The rgcam package does not provide facilities to handle this explicitly however BaseX can handle parallel requests.  Thus we can use the `parallel` package to send requests in a `parLapply` instead of a regular `lapply`.
 ```{R}
 library(parallel)
 # We need to tell the parallel library how many cores we want to use
-# and we also need to explicitly load the gcam package into it's
+# and we also need to explicitly load the rgcam package into it's
 # environmenmt (since each parallel executation happens in a seperate one)
 cluster <- makeCluster(4)
 clusterEvalQ(cluster, library(rgcam))
 proj_list <- parLapply(cluster, batch_queries, function(query, conn) {
     # We can use an existing project or just a "temp" if we want to just start fresh
     # in either case we *have* to use saveProj=FALSE since otherwise it would try to
-    # write over it self in each parallel execution
+    # write over itself in each parallel execution
     addSingleQuery(conn, "temp", query$title, query$query, c(), query$regions, saveProj=F)
 }, conn)
 # We new need to merge each scenario back into a single project.
-# In this case we will clobber to make sure we get the freshly queries data.
+# In this case we will clobber to make sure we get the freshly queried data.
 examples.proj <- mergeProjects(examples.proj, proj_list, clobber=TRUE)
 # We also need to explicitly stop the cluster when we are done using it.
 stopCluster(cluster)
