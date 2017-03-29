@@ -58,6 +58,8 @@ localDBConn <- function(dbPath, dbFile, miclasspath=NULL, migabble=NULL) {
 runQuery.localDBConn <- function(dbConn, query, scenarios, regions) {
     xqScenarios <- ifelse(length(scenarios) == 0, "()", paste0("('", paste(scenarios, collapse="','"), "')"))
     xqRegion <- ifelse(length(regions) == 0, "()", paste0("('", paste(regions, collapse="','"), "')"))
+    # strip newlines from queries to avoid errors on windows
+    query <- gsub('\n', '', query)
     cmd <- c(
         "java",
         paste("-cp", dbConn$miclasspath),
