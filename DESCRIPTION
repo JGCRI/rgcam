@@ -20,6 +20,7 @@ LazyData: true
 Imports:
     stringr,
     dplyr,
+    tidyr,
     readr,
     httr,
     xml2

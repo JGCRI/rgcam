@@ -219,7 +219,7 @@ batch_queries[[1]]
 ```
 
 ### Adding transformations
-Each of the add* methods allows a "transformation" which is just a function that takes one tibble and returns a "transformed" version of that tibble.  The transformation must at the very least maintain the `scneario` column.
+Each of the add* methods allows a "transformation" which is just a function that takes one tibble and returns a "transformed" version of that tibble.  The transformation must at the very least maintain the `scenario` column.
 ```{R, message = FALSE}
 add_global_sum <- function(data) {
     data %>% group_by_(.dots=paste0('`',names(data)[!(names(data) %in% c("region", "value"))],'`')) %>%

@@ -37,8 +37,10 @@ test_that('Passing an invalid object is an error.', {
 
 test_that('Data can be imported from GCAM database.', {
               prj <- addScenario(conn, file.valid)
-              attr(prj,'file') <- 'TEST' # because this is a tempfile, suppress
-                                        # the filename.
+              attr(prj,'file') <- NULL # 'file' attr is stripped when
+                                       # project is saved so when using
+                                       # expect_equal_to_reference we must
+                                       # strip it first.
               expect_equal_to_reference(prj,
                                         'sample-prj.dat')
               expect_true(file.exists(file.valid))
@@ -51,12 +53,12 @@ test_that('Clobber argument to addScenario works.', {
                              'already exists')
               expect_warning(prj <- addScenario(conn, file.valid),
                              'clobber')
-              attr(prj,'file') <- 'TEST'
+              attr(prj,'file') <- NULL
               expect_equal_to_reference(prj, 'sample-prj.dat')
 
               expect_silent(prj <- addScenario(conn, file.valid,
                                                clobber=TRUE))
-              attr(prj,'file') <- 'TEST'
+              attr(prj,'file') <- NULL
               expect_equal_to_reference(prj, 'sample-prj.dat')
           })
 
@@ -74,7 +76,7 @@ test_that('loadProject works.', {
               expect_error(loadProject(file.bad), 'Unable to load project')
               prj <- loadProject(file.valid)
               expect_equal(attr(prj,'file'), file.valid)
-              attr(prj,'file') <- 'TEST'
+              attr(prj,'file') <- NULL
               expect_equal_to_reference(prj, 'sample-prj.dat')
           })
 

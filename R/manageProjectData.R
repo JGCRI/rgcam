@@ -35,7 +35,7 @@ loadProject <- function(proj) {
     if(is.character(proj)) {
         projFile <- proj
         if(file.exists(projFile)) {
-            projFile <- normalizePath(projFile)
+            #projFile <- normalizePath(projFile)
             if(file.access(projFile, mode=6)!=0) { # 6 == read and write permission
                 ## file.access returns 0 on success
                 stop("File ", projFile,
@@ -57,27 +57,17 @@ loadProject <- function(proj) {
                      projFile,".  Validation failed at step", stat)
             }
 
-            ## Check the file name stored in the data.
-            if(is.null(attr(prjdata,"file")) || attr(prjdata, "file") != projFile) {
-                ## This generally means that the file has been moved or renamed
-                ## since it was written.  Notify the user, but it's not an error.
-                message("Project file name (",
-                        projFile,") does not match the name recorded in the data (",
-                        attr(prjdata,'file'), ").  Updating to match new file name.")
-                attr(prjdata, 'file') <- projFile
-            }
+            ## Set the 'file' attribute so that if a user attempts to save the project
+            ## again it can know where to save it.
+            attr(prjdata, 'file') <- projFile
         }
         else {
             prjdata <- list()
-            save(prjdata, file=projFile)    # have to create file to use normalizePath
-            projFile <- normalizePath(projFile)
             attr(prjdata, 'file') <- projFile
-            unlink(projFile)            # ...but we don't actually want to
-            # create the file unless we succeed.
         }
     }
     else if(project.valid(proj) %in% c(0, 2)) {
-        projFile <- attr(proj,'file')
+        # This is an already loaded and valid project so we can just use it as is
         prjdata <- proj
     }
     else {
@@ -103,6 +93,9 @@ loadProject <- function(proj) {
 #' back to the original object; otherwise you will write a copy of the data set,
 #' but your working copy will continue to be backed by the original file.
 #'
+#' Note: when the project is written to disk the file attribute is stripped first
+#' so users can safely move, rename, share a project file without any problems.
+#'
 #' For example:
 #' \preformatted{
 #' > prj <- loadProject(file1.dat)
@@ -123,11 +116,19 @@ saveProject <- function(prjdata, file=NULL) {
     if(stat != 0) {
         stop("saveProject:  invalid project data object, stat=", stat)
     }
-    if(is.null(file))
+    if(is.null(file)) {
         file <- attr(prjdata, 'file')
-    else
-        attr(prjdata, 'file') <- file
+    }
+
+    # strip file attribute before saving so the data file can be moved or
+    # renamed and not cause any issues when it is reloaded.
+    attr(prjdata, 'file') <- NULL
     save(prjdata, file=file, compress='xz')
+    # add the file attribute back on so users can continue to use it as
+    # before.
+    # Note if the file param was specificied this is implicitly reseting
+    # the file attribute on prjdata
+    attr(prjdata, 'file') <- file
     invisible(prjdata)
 }
 

@@ -28,6 +28,9 @@ frame to have its backing file updated, you have to assign this return value
 back to the original object; otherwise you will write a copy of the data set,
 but your working copy will continue to be backed by the original file.
 
+Note: when the project is written to disk the file attribute is stripped first
+so users can safely move, rename, share a project file without any problems.
+
 For example:
 \preformatted{
 > prj <- loadProject(file1.dat)

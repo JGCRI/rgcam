@@ -123,11 +123,13 @@ addQueryTable <- function(project, qdata, queryname, clobber=FALSE,
         }
 
         ## Add the new table to the scenario.
+        scndate <- unique(scenqdata$rundate)
         scenqdata$rundate <- NULL       # Not needed anymore.
         if(queryname %in% listQueries(project, scenario)) {
             if(clobber) {
                 ## Ok to replace
                 project[[scenario]][[queryname]] <- scenqdata
+                attr(project[[scenario]], 'date') <- scndate
             }
             else {
                 warning('addQueryTable: query ', queryname,
@@ -138,6 +140,7 @@ addQueryTable <- function(project, qdata, queryname, clobber=FALSE,
         else {
             ## Add as new query
             project[[scenario]][[queryname]] <- scenqdata
+            attr(project[[scenario]], 'date') <- scndate
         }
     }
     ## If we make it here, then all scenarios have been successfully added.
