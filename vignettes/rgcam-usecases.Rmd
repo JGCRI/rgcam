@@ -269,7 +269,10 @@ library(parallel)
 # We need to tell the parallel library how many cores we want to use
 # and we also need to explicitly load the rgcam package into it's
 # environmenmt (since each parallel executation happens in a seperate one)
-cluster <- makeCluster(4)
+# Note a user can use detectCores to come up with the appropriate number
+# of parallel executions.  For the purposes of testing on Github a maximum
+# of two are allowed.
+cluster <- makeCluster(2)
 clusterEvalQ(cluster, library(rgcam))
 proj_list <- parLapply(cluster, batch_queries, function(query, conn) {
     # We can use an existing project or just a "temp" if we want to just start fresh
