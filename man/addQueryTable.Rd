@@ -51,10 +51,6 @@ date of the run, if any, will be stripped off.
 such as "region" or "sector".  Column names will be converted to lower case.
   \item There should be a "Units" column that gives the measurement unit for
 the data.
-  \item The results for model years should appear in the remaining columns,
-one for each year.  For historical reasons, most utilities for handling GCAM
-data expect these columns to start with 'X', for example: "X2050"; however,
-this convention is not enforced here.
 }
 
 You can have multiple scenarios in a single table if you want.  In that case

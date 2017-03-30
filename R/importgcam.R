@@ -151,28 +151,29 @@ addScenario <- function(conn, proj, scenario=NULL, queryFile=NULL,
 #'
 #' @examples
 #' # The query must be the same XML found in a GCAM query file:
-#' query_name <- "CO2 emissions by region"
-#' co2_query <- '<emissionsQueryBuilder title="CO2 emissions by region">
-#'                   <axis1 name="region">region</axis1>
-#'                   <axis2 name="Year">emissions</axis2>
-#'                   <xPath buildList="true" dataName="emissions" group="false" sumAll="false">*[@type = \'sector\' (:collapse:)]//CO2/emissions/node()</xPath>
-#'                   <comments/>
-#'               </emissionsQueryBuilder>'
-#' addSingleQuery(db_connection, "test.proj", query_name, co2_query, "Reference")
+#' SAMPLE.GCAMDBLOC <- system.file("extdata",package="rgcam")
+#' db_connection <- localDBConn(SAMPLE.GCAMDBLOC, "sample_basexdb")
+#' query_name <- "CO2 concentrations"
+#' co2_query <- '<ClimateQuery title="CO2 concentrations">
+#'                 <axis1 name="CO2-concentration">none</axis1>
+#'                 <axis2 name="Year">CO2-concentration[@year]</axis2>
+#'                 <xPath buildList="true" dataName="CO2-concentration" group="false" sumAll="false">climate-model/CO2-concentration/text()</xPath>
+#'                 <comments/>
+#'               </ClimateQuery>'
+#' addSingleQuery(db_connection, "test.proj", query_name, co2_query)
 #'
 #' # However it could also be given for instance as a query string that will result in such XML:
-#' query_name <- "CO2 emissions by region"
-#' co2_query <- paste0("doc('~gcam/output/queries/Main_queries.xml')//*[@title='",
+#' SAMPLE.QF <- system.file("ModelInterface", "sample-queries-interactive.xml", package="rgcam")
+#' co2_query <- paste0("doc('", SAMPLE.QF, "')//*[@title='",
 #'                     query_name, "']")
-#' addSingleQuery(db_connection, "test.proj", query_name, co2_query, "Reference")
+#' addSingleQuery(db_connection, "test.proj", query_name, co2_query)
 #'
 #' # Alternatively a user may use an XML package if for instance their query file is
 #' # stored locally but are running queries on some remote machine:
 #' library(xml2)
-#' queries <- read_xml("~gcam/output/queries/Main_queries.xml")
-#' query_name <- "CO2 emissions by region"
+#' queries <- read_xml(SAMPLE.QF)
 #' co2_query <- xml_find_first(queries, paste0("//*[@title='", query_name, "']"))
-#' addSingleQuery(db_connection, "test.proj", query_name, co2_query, "Reference")
+#' addSingleQuery(db_connection, "test.proj", query_name, co2_query)
 #'
 #' @export
 addSingleQuery <- function(conn, proj, qn, query, scenario=NULL, regions=NULL,
