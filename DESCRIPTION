@@ -19,6 +19,7 @@ Encoding: UTF-8
 LazyData: true
 Imports:
     stringr,
+    lubridate,
     dplyr,
     tidyr,
     readr,
