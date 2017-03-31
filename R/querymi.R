@@ -11,10 +11,13 @@
 #' @param query A Model Interface query to run.  This is typically provided as the
 #' XML typically found in the Main_queries.xml but could also be given for instance
 #' as a query string that will result in XML such as:
-#' \code{collection('../output/queries/Main_queries.xml')//*[@title='Cogeneration by sector']}
-#' @param scenarios An array of scenarios to query. TODO: more about syntax
+#' \code{doc('../output/queries/Main_queries.xml')//*[@title='Cogeneration by sector']}
+#' @param scenarios An array of scenarios to query. An empty list will imply the
+#' last scenario in the database.  Each value can either be the scenario name or the
+#' scenario name and date seperated by a space.  Note the date is specified exactly as
+#' in appears in the database.
 #' @param regions An array of regions to query. An empty list will imply "all-regions".
-#' @return A data.frame with the results.  TODO: what about errors?
+#' @return A data.frame with the results.
 #' @export
 runQuery <- function(dbConn, query, scenarios, regions) UseMethod("runQuery")
 
@@ -52,6 +55,18 @@ localDBConn <- function(dbPath, dbFile, miclasspath=NULL, migabble=NULL) {
 }
 
 #' Run query specialization for local databases
+#'
+#' @param dbConn The connection to a database which will handle running the query.
+#' @param query A Model Interface query to run.  This is typically provided as the
+#' XML typically found in the Main_queries.xml but could also be given for instance
+#' as a query string that will result in XML such as:
+#' \code{doc('../output/queries/Main_queries.xml')//*[@title='Cogeneration by sector']}
+#' @param scenarios An array of scenarios to query. An empty list will imply the
+#' last scenario in the database.  Each value can either be the scenario name or the
+#' scenario name and date seperated by a space.  Note the date is specified exactly as
+#' in appears in the database.
+#' @param regions An array of regions to query. An empty list will imply "all-regions".
+#' @return A data.frame with the results.
 #' @export
 #' @importFrom readr read_csv
 #' @importFrom dplyr %>% group_by_ summarize ungroup
@@ -119,6 +134,18 @@ remoteDBConn <- function(dbFile, username, password, address="localhost", port=8
 }
 
 #' Run query specialization for remote databases
+#'
+#' @param dbConn The connection to a database which will handle running the query.
+#' @param query A Model Interface query to run.  This is typically provided as the
+#' XML typically found in the Main_queries.xml but could also be given for instance
+#' as a query string that will result in XML such as:
+#' \code{doc('../output/queries/Main_queries.xml')//*[@title='Cogeneration by sector']}
+#' @param scenarios An array of scenarios to query. An empty list will imply the
+#' last scenario in the database.  Each value can either be the scenario name or the
+#' scenario name and date seperated by a space.  Note the date is specified exactly as
+#' in appears in the database.
+#' @param regions An array of regions to query. An empty list will imply "all-regions".
+#' @return A data.frame with the results.
 #' @export
 #' @importFrom httr POST authenticate http_error content
 #' @importFrom dplyr %>% group_by_ summarize ungroup

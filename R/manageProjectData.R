@@ -71,7 +71,7 @@ loadProject <- function(proj) {
         prjdata <- proj
     }
     else {
-        stop("addScenario: invalid object passed as proj argument; proj must be a filename or project data object.")
+        stop("loadProject: invalid object passed as proj argument; proj must be a filename or project data object.")
     }
 
     prjdata

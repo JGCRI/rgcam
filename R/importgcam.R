@@ -242,7 +242,7 @@ sep.date <- function(scenstr) {
 #' Parse the raw output of a GCAM batch query into a set of tables.
 #'
 #' @param fn Name of the file containing the output from the GCAM Model Interface.
-#' @importFrom readr read_delim
+#' @importFrom readr read_delim cols
 #' @importFrom dplyr %>% matches mutate
 #' @importFrom tidyr gather
 #' @keywords internal
@@ -295,7 +295,7 @@ parse_mi_tables <- function(fn) {
 
         ##printlog("Reading table", i, "in", fn, "( skip =", nskip, " nrows =", nrows, ")")
         tempdata <- read_delim(fn, delim = ",", skip = nskip, n_max = nrows, col_names = T,
-                               comment = '#')
+                               comment = '#', col_types=cols()) # Setting default col_types suppresses col_types messages.
 
         # Remove extra columns on end - this is often present in the MI output
         if (extrafields > 0) {

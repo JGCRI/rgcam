@@ -91,7 +91,7 @@ addQueryTable <- function(project, qdata, queryname, clobber=FALSE,
     for(scenario in names(qdsplit)) {
         ## process each scenario.
         if(! scenario %in% listScenarios(project)) {
-            warning('Scenario ', scenario,
+            message('Scenario ', scenario,
                     ' does not exist in this project.  Creating.')
             project[[scenario]] <- list()
         }

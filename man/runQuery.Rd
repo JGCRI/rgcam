@@ -12,14 +12,17 @@ runQuery(dbConn, query, scenarios, regions)
 \item{query}{A Model Interface query to run.  This is typically provided as the
 XML typically found in the Main_queries.xml but could also be given for instance
 as a query string that will result in XML such as:
-\code{collection('../output/queries/Main_queries.xml')//*[@title='Cogeneration by sector']}}
+\code{doc('../output/queries/Main_queries.xml')//*[@title='Cogeneration by sector']}}
 
-\item{scenarios}{An array of scenarios to query. TODO: more about syntax}
+\item{scenarios}{An array of scenarios to query. An empty list will imply the
+last scenario in the database.  Each value can either be the scenario name or the
+scenario name and date seperated by a space.  Note the date is specified exactly as
+in appears in the database.}
 
 \item{regions}{An array of regions to query. An empty list will imply "all-regions".}
 }
 \value{
-A data.frame with the results.  TODO: what about errors?
+A data.frame with the results.
 }
 \description{
 To run a query users need to supply a database connection, the query to run,

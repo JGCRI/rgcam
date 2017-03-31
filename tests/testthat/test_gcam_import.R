@@ -70,8 +70,6 @@ test_that('File with bad permissions is detected.', {
               Sys.chmod(file.bad, '0666')
           })
 
-## TODO:  test that transformations work.
-
 test_that('loadProject works.', {
               expect_error(loadProject(file.bad), 'Unable to load project')
               prj <- loadProject(file.valid)
@@ -363,6 +361,112 @@ test_that('addQueryTable works.', {
               ## remove the tempfile
               unlink(altfile)
           })
+
+test_that('addSingleQuery works.', {
+    query_name <- "CO2 concentrations"
+    prj <- loadProject(file.valid)
+    comp.data <- getQuery(prj, query_name)
+    co2_query <- '<ClimateQuery title="CO2 concentrations">
+                    <axis1 name="CO2-concentration">none</axis1>
+                    <axis2 name="Year">CO2-concentration[@year]</axis2>
+                    <xPath buildList="true" dataName="CO2-concentration" group="false" sumAll="false">climate-model/CO2-concentration/text()</xPath>
+                    <comments/>
+                  </ClimateQuery>'
+    ## add with full query definition
+    expect_message(prj_test <- addSingleQuery(conn, "temp", query_name, co2_query, saveProj=FALSE),
+                   'does not exist in this project.  Creating.')
+    expect_identical(getQuery(prj_test, query_name), comp.data)
+
+    ## add with query for query
+    co2_query_query <- paste0("doc('", SAMPLE.QUERIES, "')//*[@title='", query_name, "']")
+    expect_silent(prj_test <- addSingleQuery(conn, prj_test, query_name, co2_query_query, clobber=TRUE, saveProj=FALSE))
+    expect_identical(getQuery(prj_test, query_name), comp.data)
+
+    ## add with query from xml2 package
+    queries <- xml2::read_xml(SAMPLE.QUERIES)
+    co2_query <- xml2::xml_find_first(queries, paste0("//*[@title='", query_name, "']"))
+    expect_silent(prj_test <- addSingleQuery(conn, prj_test, query_name, co2_query, clobber=TRUE, saveProj=FALSE))
+    expect_identical(getQuery(prj_test, query_name), comp.data)
+})
+
+test_that('addMIBatchCSV works.', {
+    prj <- loadProject(file.valid)
+    SAMPLE.BATCH.CSV <- system.file("ModelInterface", "sample.csv", package="rgcam")
+    expect_warning(prj_test <- addMIBatchCSV(SAMPLE.BATCH.CSV, "test", saveProj=FALSE),
+                   "Missing column names filled in: 'X\\d+' \\[\\d+\\]")
+    # Do not fail test because of differing filenames.
+    #attr(prj, 'file') <- NULL
+    #attr(prj_test, 'file') <- NULL
+    #expect_identical(prj, prj_test)
+    # TODO: it seems there are infact many subtle differences when reading
+    # from the batch CSV such as column order, row sorting, the query PPP GDP by region got
+    # added to the batch query list but sample.csv didn't get updated.  From a testing
+    # perspective it would be nice if these data matched but from a mechanical standpoint
+    # it doesn't really matter.
+})
+
+test_that('mergeProjects works.', {
+    prj <- loadProject(file.valid)
+    dup1_prj <- list(Dup1=dup.scenario(prj[[1]], "Dup1"))
+    attr(dup1_prj, 'file') <-'dup1_prj'
+    dup2_prj <- list(Dup2=dup.scenario(prj[[1]], "Dup2"))
+    attr(dup2_prj, 'file') <-'dup2_prj'
+    expect_silent(merged_prj <- mergeProjects(prj, list(dup1_prj, dup2_prj), saveProj=FALSE))
+    expect_equal(listScenarios(merged_prj), c("Reference-filtered", "Dup1", "Dup2"))
+
+    # Test clobber
+    dup1_prj[[1]][["Extra Query"]] <- dup1_prj[[1]][[1]]
+    expect_warning(merged_prj <- mergeProjects(merged_prj, list(dup1_prj), saveProj=FALSE),
+                   "Skipping data in .* as clobber is false.", all=TRUE)
+    expect_true(c("Extra Query") %in% listQueries(merged_prj, "Dup1"))
+
+    dup1_prj[[1]][["Extra Query"]]$value <- 1234
+    expect_silent(merged_prj <- mergeProjects(merged_prj, list(dup1_prj), clobber=TRUE, saveProj=FALSE))
+    expect_true(all(getQuery(merged_prj, "Extra Query", "Dup1")$value == 1234))
+})
+
+test_that('querying a remote server that is not running fails', {
+    remote_conn <- remoteDBConn("does", "not", "exist")
+    co2_query <- '<ClimateQuery title="CO2 concentrations">
+                    <axis1 name="CO2-concentration">none</axis1>
+                    <axis2 name="Year">CO2-concentration[@year]</axis2>
+                    <xPath buildList="true" dataName="CO2-concentration" group="false" sumAll="false">climate-model/CO2-concentration/text()</xPath>
+                    <comments/>
+                  </ClimateQuery>'
+    expect_error(runQuery(remote_conn, co2_query, c(), c()))
+})
+
+# TODO: test querying a remote server.  It requires having a running basex server to
+# connect to.
+
+test_that('test that transformations work.', {
+    prj <- loadProject(file.valid)
+
+    sub_ahundred <- function(d) {
+        d$value <- d$value - 100
+
+        d
+    }
+    trn_list <- list()
+    trn_list[["CO2 concentrations"]] <- sub_ahundred
+    trn_list[["Population by region"]] <- sub_ahundred
+
+    # test transformation in addScenario
+    expect_message(prj_test <- addScenario(conn, "test", transformations=trn_list, saveProj=F),
+                   "does not exist in this project.  Creating.")
+    expect_identical(getQuery(prj, "CO2 concentrations")$value-100, getQuery(prj_test, "CO2 concentrations")$value)
+    expect_identical(getQuery(prj, "Population by region")$value-100, getQuery(prj_test, "Population by region")$value)
+    # Climate forcing was not in the transformation list so should not have been changed
+    expect_identical(getQuery(prj, "Climate forcing")$value, getQuery(prj_test, "Climate forcing")$value)
+
+    # test transformation in addSingleQuery
+    query_name <- "CO2 concentrations"
+    co2_query_query <- paste0("doc('", SAMPLE.QUERIES, "')//*[@title='", query_name, "']")
+    expect_message(prj_test <- addSingleQuery(conn, "test", query_name, co2_query_query,
+                   transformations=sub_ahundred, saveProj=F),
+                   "does not exist in this project.  Creating.")
+    expect_identical(getQuery(prj, "CO2 concentrations")$value-100, getQuery(prj_test, "CO2 concentrations")$value)
+})
 
 ### Cleanup
 unlink(file.valid)
