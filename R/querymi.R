@@ -2,7 +2,7 @@
 #### querymi.R:  Functions for making queries through BaseX and ModelInterface
 ################################################################################
 
-#' Run queries via a database connection and recieve results as data.frame.
+#' Run queries via a GCAM database connection and recieve results as data.frame
 #'
 #' To run a query users need to supply a database connection, the query to run,
 #' the scenarios to query, and regions to query.
@@ -12,38 +12,41 @@
 #' XML typically found in the Main_queries.xml but could also be given for instance
 #' as a query string that will result in XML such as:
 #' \code{doc('../output/queries/Main_queries.xml')//*[@title='Cogeneration by sector']}
-#' @param scenarios An array of scenarios to query. An empty list will imply the
-#' last scenario in the database.  Each value can either be the scenario name or the
-#' scenario name and date seperated by a space.  Note the date is specified exactly as
-#' in appears in the database.
-#' @param regions An array of regions to query. An empty list will imply "all-regions".
+#' @param scenarios A character vector of scenarios to query. Passing
+#' \code{NULL} in this argument will query the last scenario in the database.
+#' Each value can either be the scenario name or the scenario name and date
+#' seperated by a space.  Note the date is specified exactly as in appears in
+#' the database.
+#' @param regions A character vector of regions to query. \code{NULL} will
+#' run the query over all regions.
 #' @return A data.frame with the results.
 #' @export
-runQuery <- function(dbConn, query, scenarios, regions) UseMethod("runQuery")
+runQuery <- function(dbConn, query, scenarios=NULL, regions=NULL)
+    UseMethod("runQuery")
 
 
-#' Create a connection to a local database that can be use to run queries on.
+#' Create a connection that can be used to run queries on a local GCAM database
 #'
-#' In order to establish we require the path in which the databases reside and
-#' the name of the database to query.  Optionally you can specify a Java
-#' classpath minimally including the ModelInterface.jar and BaseX.jar.  If no
-#' classpath is given the version of ModelInterface and BaseX included in this
-#' package will be used.
+#' Given a directory in which a GCAM database is located and the name of the
+#' database, return a connection that can be used to run queries on the
+#' database.
+#'
+#' By default, the a version of the GCAM ModelInterface and BaseX libraries
+#' supplied with the package will be used to run the query.  You can replace
+#' these by specifying a Java classpath minimally including the replacement
+#' ModelInterface.jar and BaseX.jar files.
 #'
 #' @param dbPath The path in which the BaseX DBs are located.
 #' @param dbFile GCAM database to extract scenario from.
 #' @param miclasspath Java class path for the GCAM Model Interface.
-#' @param migabble Control what happens to the model interface console output.
-#' Default is to discard.
+#' @param migabble If \code{TRUE}, discard model interface console output.  If
+#' \code{FALSE}, display console output.
 #' @return A connection to a local BaseX databasse which can be used to run
 #' queries.
 #' @export
-localDBConn <- function(dbPath, dbFile, miclasspath=NULL, migabble=NULL) {
+localDBConn <- function(dbPath, dbFile, miclasspath=NULL, migabble=TRUE) {
     if(is.null(miclasspath)) {
         miclasspath = DEFAULT.MICLASSPATH
-    }
-    if(is.null(migabble)) {
-        migabble <- TRUE
     }
     db_inst <- structure(
         list(miclasspath=miclasspath, dbPath=dbPath, dbFile=dbFile, migabble=migabble),
@@ -54,23 +57,11 @@ localDBConn <- function(dbPath, dbFile, miclasspath=NULL, migabble=NULL) {
     return(db_inst)
 }
 
-#' Run query specialization for local databases
-#'
-#' @param dbConn The connection to a database which will handle running the query.
-#' @param query A Model Interface query to run.  This is typically provided as the
-#' XML typically found in the Main_queries.xml but could also be given for instance
-#' as a query string that will result in XML such as:
-#' \code{doc('../output/queries/Main_queries.xml')//*[@title='Cogeneration by sector']}
-#' @param scenarios An array of scenarios to query. An empty list will imply the
-#' last scenario in the database.  Each value can either be the scenario name or the
-#' scenario name and date seperated by a space.  Note the date is specified exactly as
-#' in appears in the database.
-#' @param regions An array of regions to query. An empty list will imply "all-regions".
-#' @return A data.frame with the results.
+#' @describeIn runQuery Run a query on a local GCAM database
 #' @export
 #' @importFrom readr read_csv
 #' @importFrom dplyr %>% group_by_ summarize ungroup
-runQuery.localDBConn <- function(dbConn, query, scenarios, regions) {
+runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL) {
     xqScenarios <- ifelse(length(scenarios) == 0, "()", paste0("('", paste(scenarios, collapse="','"), "')"))
     xqRegion <- ifelse(length(regions) == 0, "()", paste0("('", paste(regions, collapse="','"), "')"))
     # strip newlines from queries to avoid errors on windows
@@ -133,23 +124,11 @@ remoteDBConn <- function(dbFile, username, password, address="localhost", port=8
     return(db_inst)
 }
 
-#' Run query specialization for remote databases
-#'
-#' @param dbConn The connection to a database which will handle running the query.
-#' @param query A Model Interface query to run.  This is typically provided as the
-#' XML typically found in the Main_queries.xml but could also be given for instance
-#' as a query string that will result in XML such as:
-#' \code{doc('../output/queries/Main_queries.xml')//*[@title='Cogeneration by sector']}
-#' @param scenarios An array of scenarios to query. An empty list will imply the
-#' last scenario in the database.  Each value can either be the scenario name or the
-#' scenario name and date seperated by a space.  Note the date is specified exactly as
-#' in appears in the database.
-#' @param regions An array of regions to query. An empty list will imply "all-regions".
-#' @return A data.frame with the results.
+#' @describeIn runQuery Run query specialization for remote databases
 #' @export
 #' @importFrom httr POST authenticate http_error content
 #' @importFrom dplyr %>% group_by_ summarize ungroup
-runQuery.remoteDBConn <- function(dbConn, query, scenarios, regions) {
+runQuery.remoteDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL) {
     xqScenarios <- ifelse(length(scenarios) == 0, "()", paste0("('", paste(scenarios, collapse="','"), "')"))
     xqRegion <- ifelse(length(regions) == 0, "()", paste0("('", paste(regions, collapse="','"), "')"))
     restQuery <- paste(

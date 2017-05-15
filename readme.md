@@ -63,6 +63,18 @@ queries <- listQueries(project.data, 'scenario-name')
 gdp.rgn <- getQuery(prj, 'GDP by region')
 ```
 
+The `rgcam` package now supports a number of advanced usage modes that
+are described in a vignette included with the package.  Once you have
+the `rgcam` installed, run
+```R
+devtools::build_vignettes('rgcam')
+browsVignettes('rgcam')
+```
+Note that when you run the first step you may get an alert saying that
+R is requesting to receive network connections through your firewall.
+We're working on getting that fixed.  In the meantime, you can _deny_
+this request without any ill effects.
+
 ## Getting Help
 
 rgcam is under active development.  If you have trouble installing it,

@@ -2,8 +2,7 @@
 % Please edit documentation in R/importgcam.R
 \name{parse_batch_query}
 \alias{parse_batch_query}
-\title{Parse a Model Interface batch query file so each aQuery can get sent to be
-run individually.}
+\title{Parse a Model Interface batch query file}
 \usage{
 parse_batch_query(fn)
 }
@@ -11,10 +10,21 @@ parse_batch_query(fn)
 \item{fn}{Name of the batch query file to parse}
 }
 \value{
-A list of queries by name of a list $regions and $query which has
-the list of regions to query and the query text.
+A list of query structures for the queries found in the batch file.
 }
 \description{
-Parse a Model Interface batch query file so each aQuery can get sent to be
-run individually.
+Given a Model Interface batch query file (\emph{i.e.,} an XML file detailing
+queries that the user might wish to run), parse the file to produce a list of
+queries that can be run by \code{\link{runQuery}}.
+}
+\details{
+The queries parsed from the batch query file are returned as a list of query
+information struatures. Each structure \code{q} has elements \code{q$regions}
+(regions specified in the query), \code{q$title} (title of the query), and
+\code{q$query} (the XML specification of the query from the batch file).  The
+\code{query} and \code{regions} items are suitable for passing to the
+corresponding arguments of \code{runQuery}.  However, it is not
+\emph{required} to use the \code{regions} argument; one can instead supply a
+different list of regions, or no list at all (implicitly running all
+regions), as described in the \code{\link{runQuery}} documentation.
 }

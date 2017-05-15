@@ -2,9 +2,17 @@
 % Please edit documentation in R/querymi.R
 \name{runQuery}
 \alias{runQuery}
-\title{Run queries via a database connection and recieve results as data.frame.}
+\alias{runQuery.localDBConn}
+\alias{runQuery.remoteDBConn}
+\title{Run queries via a GCAM database connection and recieve results as data.frame}
 \usage{
-runQuery(dbConn, query, scenarios, regions)
+runQuery(dbConn, query, scenarios = NULL, regions = NULL)
+
+\method{runQuery}{localDBConn}(dbConn, query, scenarios = NULL,
+  regions = NULL)
+
+\method{runQuery}{remoteDBConn}(dbConn, query, scenarios = NULL,
+  regions = NULL)
 }
 \arguments{
 \item{dbConn}{The connection to a database which will handle running the query.}
@@ -14,12 +22,14 @@ XML typically found in the Main_queries.xml but could also be given for instance
 as a query string that will result in XML such as:
 \code{doc('../output/queries/Main_queries.xml')//*[@title='Cogeneration by sector']}}
 
-\item{scenarios}{An array of scenarios to query. An empty list will imply the
-last scenario in the database.  Each value can either be the scenario name or the
-scenario name and date seperated by a space.  Note the date is specified exactly as
-in appears in the database.}
+\item{scenarios}{A character vector of scenarios to query. Passing
+\code{NULL} in this argument will query the last scenario in the database.
+Each value can either be the scenario name or the scenario name and date
+seperated by a space.  Note the date is specified exactly as in appears in
+the database.}
 
-\item{regions}{An array of regions to query. An empty list will imply "all-regions".}
+\item{regions}{A character vector of regions to query. \code{NULL} will
+run the query over all regions.}
 }
 \value{
 A data.frame with the results.
@@ -28,3 +38,10 @@ A data.frame with the results.
 To run a query users need to supply a database connection, the query to run,
 the scenarios to query, and regions to query.
 }
+\section{Methods (by class)}{
+\itemize{
+\item \code{localDBConn}: Run a query on a local GCAM database
+
+\item \code{remoteDBConn}: Run query specialization for remote databases
+}}
+

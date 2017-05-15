@@ -9,7 +9,9 @@ addScenario(conn, proj, scenario = NULL, queryFile = NULL,
   saveProjEach = FALSE)
 }
 \arguments{
-\item{conn}{A GCAM database to connection extract scenario from.}
+\item{conn}{A GCAM database to extract scenario from.  This can be either a
+filename or a connection opened with localDBConn or remoteDBConn.  If a
+filename is passed, it will be opened as a local connection.}
 
 \item{proj}{Project to add extracted results to.  Can be either a project
 data structure or the name of a project data file.  The file will be created
