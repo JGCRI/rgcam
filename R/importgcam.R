@@ -64,6 +64,10 @@ addScenario <- function(conn, proj, scenario=NULL, queryFile=NULL,
                         clobber=FALSE, transformations=NULL,
                         saveProj=TRUE, saveProjEach=FALSE) {
 
+    if(is.character(conn)) {
+        conn <- localDBConn(dirname(conn), basename(conn))
+    }
+
     prjdata <- loadProject(proj)
 
     if(is.null(queryFile)) {

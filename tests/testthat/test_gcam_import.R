@@ -46,6 +46,16 @@ test_that('Data can be imported from GCAM database.', {
               expect_true(file.exists(file.valid))
           })
 
+test_that('addScenario works with a database filename.', {
+              tf <- tempfile()
+              dbfile <- system.file('extdata/sample_basexdb', package='rgcam')
+              prj <- addScenario(dbfile, tf)
+              attr(prj, 'file') <- NULL # see note above.
+              expect_equal_to_reference(prj, 'sample-prj.dat')
+              expect_true(file.exists(tf))
+              unlink(tf)
+          })
+
 ## file.valid now exists
 test_that('Clobber argument to addScenario works.', {
               expect_warning(prj <- addScenario(conn, file.valid,
