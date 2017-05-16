@@ -18,4 +18,3 @@ the XYYYY year columns, and 'Units', which existing tools all expect to be in
 title case.
 }
 \keyword{internal}
-

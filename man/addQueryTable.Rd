@@ -5,7 +5,7 @@
 \title{Import a table of data into a project data set as a new query.}
 \usage{
 addQueryTable(project, qdata, queryname, clobber = FALSE,
-  strict.rundate = FALSE)
+  transformation = NULL, saveProj = TRUE, strict.rundate = FALSE)
 }
 \arguments{
 \item{project}{The project data set to add the query to.  This can be either
@@ -20,6 +20,14 @@ project.}
 \item{clobber}{Flag: if \code{TRUE}, then the operation can replace a query
 in an existing scenario from the data set.  If \code{FALSE}, then attempting
 to replace an existing query will cause the entire operation to fail.}
+
+\item{transformation}{Transformation function to the data after it has been
+cleaned up but before it has been added to the project.}
+
+\item{saveProj}{A flag to save the project to disk after data has been added.
+A user may want to avoid it if they are for instance calling this method several
+times and would prefer to save at the end.  Users can always save at anytime by
+calling \code{saveProject}.}
 
 \item{strict.rundate}{Flag: if \code{TRUE}, then require that the run dates
 match in order to add queries to a scenario, and fail the entire operation if
@@ -43,10 +51,6 @@ date of the run, if any, will be stripped off.
 such as "region" or "sector".  Column names will be converted to lower case.
   \item There should be a "Units" column that gives the measurement unit for
 the data.
-  \item The results for model years should appear in the remaining columns,
-one for each year.  For historical reasons, most utilities for handling GCAM
-data expect these columns to start with 'X', for example: "X2050"; however,
-this convention is not enforced here.
 }
 
 You can have multiple scenarios in a single table if you want.  In that case
@@ -64,4 +68,3 @@ came from.  If the attempt to add the query to \emph{any} scenarios fails,
 then the function will throw an error and the project data will be
 unmodified.
 }
-

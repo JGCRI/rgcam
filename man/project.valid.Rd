@@ -15,4 +15,3 @@ This function will check the 7 conditions described in
 the first condition to fail otherwise.
 }
 \keyword{internal}
-

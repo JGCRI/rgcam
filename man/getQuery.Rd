@@ -18,4 +18,3 @@ data set.}
 Return a data frame with the results for a query for all of the selected
 scenarios.
 }
-

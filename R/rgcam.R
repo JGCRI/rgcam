@@ -15,12 +15,12 @@
 #'containing the queries that you want to extract from it.  You could
 #'then get started by running, for example:
 #'\verb{
-#'
-#'project.data <- addScenario('gcamdb_basexdb', 'project.dat', 'scenario-name'
-#'                            'queries.xml')
+#'conn <- localDBConn('/path/to/dbs', 'gcamdb_basexdb')
+#'project.data <- addScenario(conn, 'project.dat', 'scenario-name'
+#'                            'batch_queries.xml')
 #'
 #'}
-#'This command would run the queries in `queries.xml` against the
+#'This command would run the queries in `batch_queries.xml` against the
 #'database `gcamdb_basexdb`, extract the results for a scenario called
 #'"scenario-name", and write the results to a file called "project.dat".
 #'If you have other scenarios, whether in the same database or a

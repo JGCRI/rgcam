@@ -20,4 +20,3 @@ exception:  if only a single argument is passed, we return NA.  This is so
 that the result makes sense in \code{\link{diffScenarios}}.
 }
 \keyword{internal}
-

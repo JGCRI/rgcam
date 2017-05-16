@@ -25,33 +25,53 @@
 #' Despite these checks, it is possible to construct a data set that passes and
 #' yet still contains bad data.  When in doubt load the file directly and check
 #' to see that it contains the data you expect it to.
-#' @param projFile The file to load the data from.
+#' @param proj Project to add extracted results to.  Can be either a project
+#' data structure or the name of a project data file.  The file will be created
+#' if it doesn't already exist.
+#' @return The project dataset which may or may not have acutally had to be loaded.
 #' @export
-loadProject <- function(projFile) {
-    load(projFile)                  # Loads the variable prjdata.
-    if(!exists("prjdata", inherits=FALSE)) {
-        ## Something went wrong with the load.  Probably projFile exists but
-        ## isn't a valid project file.
-        message(paste("File", projFile,
-                      "does not contain valid project data."))
-        message("Try loading the file into an R session and verify that it contains the variable 'prjdata'.")
-        stop("Unable to load project file ", projFile)
-    }
+loadProject <- function(proj) {
 
-    stat <- project.valid(prjdata)
-    if(stat != 0) {
-        stop("Invalid project data in ",
-                   projFile,".  Validation failed at step", stat)
-    }
+    if(is.character(proj)) {
+        projFile <- proj
+        if(file.exists(projFile)) {
+            #projFile <- normalizePath(projFile)
+            if(file.access(projFile, mode=6)!=0) { # 6 == read and write permission
+                ## file.access returns 0 on success
+                stop("File ", projFile,
+                     " exists but lacks either read or write permission.")
+            }
+            load(projFile)                  # Loads the variable prjdata.
+            if(!exists("prjdata", inherits=FALSE)) {
+                ## Something went wrong with the load.  Probably projFile exists but
+                ## isn't a valid project file.
+                message(paste("File", projFile,
+                              "does not contain valid project data."))
+                message("Try loading the file into an R session and verify that it contains the variable 'prjdata'.")
+                stop("Unable to load project file ", projFile)
+            }
 
-    ## Check the file name stored in the data.
-    if(is.null(attr(prjdata,"file")) || attr(prjdata, "file") != projFile) {
-        ## This generally means that the file has been moved or renamed
-        ## since it was written.  Notify the user, but it's not an error.
-        message("Project file name (",
-                projFile,") does not match the name recorded in the data (",
-                attr(prjdata,'file'), ").  Updating to match new file name.")
-        attr(prjdata, 'file') <- projFile
+            stat <- project.valid(prjdata)
+            if(stat != 0) {
+                stop("Invalid project data in ",
+                     projFile,".  Validation failed at step", stat)
+            }
+
+            ## Set the 'file' attribute so that if a user attempts to save the project
+            ## again it can know where to save it.
+            attr(prjdata, 'file') <- projFile
+        }
+        else {
+            prjdata <- list()
+            attr(prjdata, 'file') <- projFile
+        }
+    }
+    else if(project.valid(proj) %in% c(0, 2)) {
+        # This is an already loaded and valid project so we can just use it as is
+        prjdata <- proj
+    }
+    else {
+        stop("loadProject: invalid object passed as proj argument; proj must be a filename or project data object.")
     }
 
     prjdata
@@ -73,6 +93,9 @@ loadProject <- function(projFile) {
 #' back to the original object; otherwise you will write a copy of the data set,
 #' but your working copy will continue to be backed by the original file.
 #'
+#' Note: when the project is written to disk the file attribute is stripped first
+#' so users can safely move, rename, share a project file without any problems.
+#'
 #' For example:
 #' \preformatted{
 #' > prj <- loadProject(file1.dat)
@@ -93,12 +116,64 @@ saveProject <- function(prjdata, file=NULL) {
     if(stat != 0) {
         stop("saveProject:  invalid project data object, stat=", stat)
     }
-    if(is.null(file))
+    if(is.null(file)) {
         file <- attr(prjdata, 'file')
-    else
-        attr(prjdata, 'file') <- file
+    }
+
+    # strip file attribute before saving so the data file can be moved or
+    # renamed and not cause any issues when it is reloaded.
+    attr(prjdata, 'file') <- NULL
     save(prjdata, file=file, compress='xz')
+    # add the file attribute back on so users can continue to use it as
+    # before.
+    # Note if the file param was specificied this is implicitly reseting
+    # the file attribute on prjdata
+    attr(prjdata, 'file') <- file
     invisible(prjdata)
+}
+
+#' Merge a list projects into a single project
+#'
+#' Users can use this function to collapse multiple project into a single
+#' project.  This could be useful for instance to import someone else's
+#' data into your project.  A user must explicitly specify the new name
+#' the new project will recieve.  In addition they can control what
+#' happens with scenario/query collisions with the \code{clobber} param.
+#'
+#' @param prjname The name of a project data file for the merged project.
+#' @param prjlist A list of projects that need to be merged together.  Note
+#' each project will be run through \code{\link{loadProject}} in case it has
+#' not yet been loaded.
+#' @param clobber If \code{TRUE}, overwrite any existing scenario of the same
+#' name; otherwise, fail if scenario/query already exists in the data set.
+#' @param saveProj A flag to save the project to disk after data has been added.
+#' A user may want to avoid it if they are for instance calling this method several
+#' times and would prefer to save at the end.  Users can always save at anytime by
+#' calling \code{saveProject}.
+#' @return The project dataset with the projects merged.
+#' @export
+mergeProjects <- function(prjname, prjlist, clobber=FALSE, saveProj=TRUE) {
+    finalproj <- loadProject(prjname)
+
+    # for loops!
+    for(prj in prjlist) {
+        prjdata <- loadProject(prj)
+        for(scn in names(prjdata)) {
+            for(qn in names(prjdata[[scn]])) {
+                if(!clobber && !is.null(finalproj[[scn]]) && !is.null(finalproj[[scn]][[qn]])) {
+                    warning(paste("Skipping data in",scn,"/",qn,"as clobber is false."))
+                } else {
+                    finalproj[[scn]][[qn]] <- prjdata[[scn]][[qn]]
+                }
+            }
+        }
+    }
+
+    if(saveProj) {
+        saveProject(finalproj)
+    }
+
+    finalproj
 }
 
 #' List the scenarios in a project data set
@@ -236,6 +311,7 @@ getRundates <- function(projData, scenarios=NULL)
 #' @param query The name of the query to extract.
 #' @param scenarios Vector of scenario names.  If NULL, use all scenarios in the
 #' data set.
+#' @importFrom dplyr bind_rows
 #' @export
 getQuery <- function(projData, query, scenarios=NULL) {
     if(is.null(scenarios)) {
@@ -248,7 +324,7 @@ getQuery <- function(projData, query, scenarios=NULL) {
 
     queries <- lapply(scenarios, function(s) {projData[[s]][[query]]})
 
-    do.call(rbind, queries)
+    bind_rows(queries)
 }
 
 #' Drop specified queries from scenarios.

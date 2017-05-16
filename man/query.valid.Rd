@@ -15,4 +15,3 @@ scenario data structure.  It will return the number of the first check to
 fail, or 0 if all pass.
 }
 \keyword{internal}
-

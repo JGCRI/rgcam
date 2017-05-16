@@ -31,4 +31,3 @@ Technically is is possible to pass a filename for \code{proj} with
 be loaded and filtered without modifying the original, albeit in a somewhat
 nonintuitive way.
 }
-

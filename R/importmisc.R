@@ -19,10 +19,6 @@
 #' such as "region" or "sector".  Column names will be converted to lower case.
 #'   \item There should be a "Units" column that gives the measurement unit for
 #' the data.
-#'   \item The results for model years should appear in the remaining columns,
-#' one for each year.  For historical reasons, most utilities for handling GCAM
-#' data expect these columns to start with 'X', for example: "X2050"; however,
-#' this convention is not enforced here.
 #' }
 #'
 #' You can have multiple scenarios in a single table if you want.  In that case
@@ -49,11 +45,18 @@
 #' @param clobber Flag: if \code{TRUE}, then the operation can replace a query
 #' in an existing scenario from the data set.  If \code{FALSE}, then attempting
 #' to replace an existing query will cause the entire operation to fail.
+#' @param transformation Transformation function to the data after it has been
+#' cleaned up but before it has been added to the project.
+#' @param saveProj A flag to save the project to disk after data has been added.
+#' A user may want to avoid it if they are for instance calling this method several
+#' times and would prefer to save at the end.  Users can always save at anytime by
+#' calling \code{saveProject}.
 #' @param strict.rundate Flag: if \code{TRUE}, then require that the run dates
 #' match in order to add queries to a scenario, and fail the entire operation if
 #' they don't.  If \code{FALSE}, then ignore dates in the new data set.
 #' @export
 addQueryTable <- function(project, qdata, queryname, clobber=FALSE,
+                          transformation=NULL, saveProj=TRUE,
                           strict.rundate=FALSE)
 {
     ## Check to see if either of the inputs are file names and if so replace
@@ -62,9 +65,7 @@ addQueryTable <- function(project, qdata, queryname, clobber=FALSE,
         qdata <- read.csv(qdata, row.names=FALSE)
     }
 
-    if(is.character(project)) {
-        project <- loadProject(project)
-    }
+    project <- loadProject(project)
 
     ## standardize the case of column names.
     qdata <- stdcase(qdata)
@@ -81,15 +82,18 @@ addQueryTable <- function(project, qdata, queryname, clobber=FALSE,
         qdata <- dplyr::mutate(qdata, rundate=NA)
     }
 
+    if(!is.null(transformation)) {
+        qdata <- transformation(qdata)
+    }
+
     qdsplit <- split(qdata, qdata[['scenario']])
 
     for(scenario in names(qdsplit)) {
         ## process each scenario.
         if(! scenario %in% listScenarios(project)) {
-            warning('Scenario ', scenario,
+            message('Scenario ', scenario,
                     ' does not exist in this project.  Creating.')
-            project <- c(project, list())
-            names(project) <- c(names(project), scenario)
+            project[[scenario]] <- list()
         }
 
         scenqdata <- qdsplit[[scenario]]
@@ -115,14 +119,16 @@ addQueryTable <- function(project, qdata, queryname, clobber=FALSE,
         }
 
         ## Add the new table to the scenario.
+        scndate <- unique(scenqdata$rundate)
         scenqdata$rundate <- NULL       # Not needed anymore.
         if(queryname %in% listQueries(project, scenario)) {
             if(clobber) {
                 ## Ok to replace
                 project[[scenario]][[queryname]] <- scenqdata
+                attr(project[[scenario]], 'date') <- scndate
             }
             else {
-                stop('addQueryTable: query ', queryname,
+                warning('addQueryTable: query ', queryname,
                      ' already exists for scenario ', scenario,
                      ' and noclobber is set.')
             }
@@ -130,10 +136,13 @@ addQueryTable <- function(project, qdata, queryname, clobber=FALSE,
         else {
             ## Add as new query
             project[[scenario]][[queryname]] <- scenqdata
+            attr(project[[scenario]], 'date') <- scndate
         }
     }
     ## If we make it here, then all scenarios have been successfully added.
     ## Save the project back to its permanent storage.
-    saveProject(project)
+    if(saveProj) {
+        saveProject(project)
+    }
     project                             # remove the 'invisible' attribute
 }

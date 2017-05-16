@@ -23,8 +23,4 @@ The scenario name is returned as is, and the date is converted to a date
 object.  The results are returned as a list with elements 'scenario' and
 'date'.
 }
-\details{
-This function assumes that it can split the
-}
 \keyword{internal}
-

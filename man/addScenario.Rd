@@ -4,12 +4,14 @@
 \alias{addScenario}
 \title{Add a scenario from a GCAM output database to a project data set}
 \usage{
-addScenario(dbFile, proj, scenario = NULL, queryFile = NULL,
-  clobber = FALSE, miclasspath = NULL, transformations = NULL,
-  migabble = NULL)
+addScenario(conn, proj, scenario = NULL, queryFile = NULL,
+  clobber = FALSE, transformations = NULL, saveProj = TRUE,
+  saveProjEach = FALSE)
 }
 \arguments{
-\item{dbFile}{GCAM database to extract scenario from.}
+\item{conn}{A GCAM database to extract scenario from.  This can be either a
+filename or a connection opened with localDBConn or remoteDBConn.  If a
+filename is passed, it will be opened as a local connection.}
 
 \item{proj}{Project to add extracted results to.  Can be either a project
 data structure or the name of a project data file.  The file will be created
@@ -24,15 +26,17 @@ scenario in the GCAM database.}
 \item{clobber}{If \code{TRUE}, overwrite any existing scenario of the same
 name; otherwise, fail if \code{scenario} already exists in the data set.}
 
-\item{miclasspath}{Java class path for the GCAM Model Interface.  If
-\code{NULL}, use a bult-in default.}
-
 \item{transformations}{Transformation functions to apply to the queries (see
 details).}
 
-\item{migabble}{Control what happens to the model interface console output.
-This is passed to the stdout/stderr argument of \code{system2}.  Default is
-to discard.}
+\item{saveProj}{A flag to save the project to disk after data has been added.
+A user may want to avoid it if they are for instance calling this method several
+times and would prefer to save at the end.  Users can always save at anytime by
+calling \code{saveProject}.}
+
+\item{saveProjEach}{A flag to save the project to disk after each query has
+completed. This would be useful if a user suspects a failure in the middle
+of running queries and would like to not loose progress made.}
 }
 \value{
 The project dataset with the new scenario added.
@@ -74,4 +78,3 @@ set and written back into the project data file.  The new data set will also
 be returned from the function so that it can be used without having to reread
 it.
 }
-

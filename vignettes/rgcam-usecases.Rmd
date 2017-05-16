@@ -1,0 +1,285 @@
+---
+title: "Advanced RGCAM example Usecases"
+author: "Pralit Patel"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Advanced RGCAM example Usecases}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+RGCAM provides methods that satisfy the typical use case to get GCAM data out of an output XML database and into R so that a user can use it.  It provides a convenient interface for doing so.  It provides these tools in a modular way so that you can build upon them to extend their capabilities to suite your particular needs.  In this vignette we start with going through basic examples to highlight the features of the package.  Then slowly move into some use cases that are not directly handled by the package but these examples will show simple tweaks to cover those cases.
+
+## Basic examples
+
+As we have seen in the package documentation examples the simplest way to get data into GCAM is to open a so called connection to a local database by specifying the path and name of the database.  Then calling `addScenario` to run a Model Interface batch query file:
+```{R, message = FALSE}
+library(rgcam)
+SAMPLE.GCAMDBLOC <- system.file("extdata",
+                             package="rgcam")
+SAMPLE.QUERIES <- system.file("ModelInterface", "sample-queries.xml",
+                              package="rgcam")
+conn <- localDBConn(SAMPLE.GCAMDBLOC, "sample_basexdb")
+examples.proj <- addScenario(conn, "examples.proj", "Reference-filtered", SAMPLE.QUERIES)
+```
+
+From there you can check the scenarios and queries that have been collected and of course get the data:
+```{R}
+listScenarios(examples.proj)
+listQueries(examples.proj)
+getQuery(examples.proj, "Aggregated Land Allocation")
+```
+
+By default `addScenario` saves the results to disk and can be loaded back.  Although if putting this in a script that may get run over again I would suggest leaving in the call
+```{R}
+# Load a previously saved project.
+# Note it is perfectly safe to load a project that doesn't already exist.
+examples.proj <- loadProject("examples.proj")
+conn <- localDBConn(SAMPLE.GCAMDBLOC, "sample_basexdb")
+examples.proj <- addScenario(conn, examples.proj, "Reference-filtered", SAMPLE.QUERIES,
+                             clobber=FALSE) # Note the default clobber value is false
+# When clobber is FALSE and the project already has the results being queried it will
+# skip running the query (a warning will be issued however).  If you added queries to batch
+# query file however then just the new queries will be made and project file updated.
+```
+
+## Loading existing batch CSV output
+If you have already run the model interface and generated batch CSV file results that you would like to include in your project you can simply add them with:
+```{R, warning = FALSE, message = FALSE}
+sample_filename <- system.file("ModelInterface", "sample.csv",
+                              package="rgcam")
+examples.proj <- addMIBatchCSV(sample_filename, examples.proj)
+```
+
+## Adding miscellaneous data
+Sometimes you would like to load some data from some other source into your project or maybe perform computations and add it as it's own "query" with `addQueryTable`.
+```{R}
+library(dplyr)
+gdp <- getQuery(examples.proj, "GDP by region")
+pop <- getQuery(examples.proj, "Population by region")
+gdp_percap <- gdp %>% rename(gdp = value) %>%
+    left_join(pop, by=c("scenario"="scenario", "region"="region", "year"="year")) %>%
+    mutate(value=gdp/value) %>% select(-gdp, -starts_with("Units")) %>%
+    mutate(Units="Thousand1990US$/person")
+examples.proj <- addQueryTable(examples.proj, gdp_percap, "GDP Percapita")
+listQueries(examples.proj)
+```
+
+## Running a single query at a time
+If you just need to run a single query and don't want to bother writing a whole batch file you can use `addSingleQuery`.  You do need to provide the full XML syntax as found in the `Main_queries.xml` file.
+```{R, message = FALSE}
+query_name <- "Land Use Change Emission"
+luc_query <- '<query title="Land Use Change Emission">
+         <axis1 name="land-use-change-emission">LandLeaf</axis1>
+         <axis2 name="Year">land-use-change-emission[@year]</axis2>
+         <xPath buildList="true" dataName="land-use-change-emission" group="false" sumAll="true">/LandNode[@name=\'root\' or @type=\'LandNode\' (: collapse :)]//land-use-change-emission/text()</xPath>
+         <comments/>
+      </query>'
+examples.proj <- addSingleQuery(conn, examples.proj, query_name, luc_query, c("Reference-filtered"), c("USA", "Canada"))
+```
+
+Although this may be a bit cumbersome.  An alternative, if you have access to a `Main_queries.xml` on the machine that is processing the queries, approach could be to query for the query.
+```{R, message = FALSE}
+query_name <- "Land Use Change Emission"
+luc_query_query <- paste0("doc('",
+                          system.file("ModelInterface", "sample-queries-interactive.xml",
+                              package="rgcam"),"')//*[@title='", query_name, "']")
+luc_query_query
+# Note Scenarios can include the date (seperated by the name with a space) if you
+# need to be able to distinguish scenarios of the same name.
+# Note an empty list of regions will query all regions
+examples.proj <- addSingleQuery(conn, examples.proj, query_name, luc_query_query,
+                                c("Reference-filtered 2016-13-12T05:31:05-08:00"), c(), clobber=TRUE)
+```
+
+Alternatively you could use the `xml2` library to parse a query file and query for queries that way.  Such an approach might be useful if you have a query file locally but are running the queries on a remote DB connection.
+```{R, message = FALSE}
+queries <- xml2::read_xml(system.file("ModelInterface", "sample-queries-interactive.xml",
+                              package="rgcam"))
+query_name <- "Land Use Change Emission"
+luc_query <- xml2::xml_find_first(queries, paste0("//*[@title='", query_name, "']"))
+# Note an empty list of scenarios will query the last scenario in the database.
+examples.proj <- addSingleQuery(conn, examples.proj, query_name, luc_query,
+                                c(), c(), clobber=TRUE)
+```
+
+### Running queries on a remote server
+Quite a common situation for GCAM users is they do their production runs on a compute cluster such as PIC and would like to do the analysis on their local machine.  Thus far users have had to run the queries on PIC and pull back the CSV batch file results.  This can be tedious especially if there are a lot of databases or new queries have to be made.  Alternatively they could copy back the databases to their local machine however this too can become prohibitive with a large number of output databases.  For this use case we add the ability to run queries on some remote database server.
+
+The ability to run the database as a server is functionality provided entirely by [BaseX](http://docs.basex.org/wiki/Main_Page).  The following is a convenient shell script to run a server hosting databases in a location given as the first argument.  Note when using BaseX in client/server mode a user account is necessary, with READ access.  Again this helper script can help facilitate setting that up as well.
+
+```bash
+#!/bin/sh
+
+# A Java classpath that minimaly includes BaseX.jar, ModelInterface.jar,
+# and BaseX's supporting libs (required to run the HTTP server)
+CLASSPATH=/pic/projects/GCAM/GCAM-libraries/src/basex-8.5.0/BaseX.jar:/pic/projects/GCAM/rgcam/inst/ModelInterface/ModelInterface.jar:/pic/projects/GCAM/GCAM-libraries/src/basex-8.5.0/lib/*
+
+if [ "$1" = "stop" ] ; then
+    # The user just wants to stop an already running server
+    java -cp $CLASSPATH org.basex.BaseXHTTP stop
+    exit 0
+elif [ $# -ne "1" ] ; then
+    echo "Usage:"
+    echo "$0 <path to databases>"
+    echo "$0 stop"
+    exit 1
+fi
+
+DBPATH=$1
+echo "DB Path: $DBPATH"
+
+# Ensure BaseX users have been set up since remote access will require a
+# username and password.  To run Model Interface queries requires READ access.
+if [ ! -e "${DBPATH}/users.xml" ] ; then
+    echo "No users.xml found in $DBPATH"
+    echo "Enter a user name to create one now (or CTRL-C to copy/create a users.xml manually):"
+    read username
+    java -cp $CLASSPATH -Dorg.basex.DBPATH=$DBPATH org.basex.BaseX -c"CREATE USER $username;GRANT READ TO $username"
+fi
+
+# Run the server, note only the DBPATH is overriden here, all other settings are
+# defined in ~/.basex
+java -cp $CLASSPATH -Dorg.basex.DBPATH=$DBPATH org.basex.BaseXHTTP
+```
+
+Then to run the server they simply need to provide the path to where the databases are stored:
+```
+[pralitp@constance03 ~]$ ./basex-server-helper.sh scratch-home/run-irr-const/pbs/output
+DB Path: scratch-home/run-irr-const/pbs/output
+No users.xml found in scratch-home/run-irr-const/pbs/output
+Enter a user name to create one now (or CTRL-C to copy/create a users.xml manually):
+test
+Password: 
+BaseX 8.5 [HTTP Server]
+[main] INFO org.eclipse.jetty.server.Server - jetty-8.1.18.v20150929
+[main] INFO org.eclipse.jetty.webapp.StandardDescriptorProcessor - NO JSP Support for /, did not find org.apache.jasper.servlet.JspServlet
+Server was started (port: 1984).
+[main] INFO org.eclipse.jetty.server.AbstractConnector - Started SelectChannelConnector@0.0.0.0:8984
+HTTP Server was started (port: 8984).
+
+```
+
+Note, to stop the server a user can again use the helper script providing just the command `stop`:
+```
+[pralitp@constance03 ~]$ ./basex-server-helper.sh stop
+```
+
+The server uses standard HTTP protocols to communicate using a "REST" API.  The host and ports are configured using the standard .basex config file.  NOTE: that many machines including PIC sit behind a firewall and will block access to the port 8984.  To work around this you can use ssh tunneling to forward that particular port.
+```bash
+# Note you should use the exact PIC login node that is running the server
+ssh -L 8984:localhost:8984 constance03
+# this will open an ssh connection however you can now make requests to
+# http://localhost:8984 and the request will get forwarded to http://constance03:8984
+```
+
+Finally you can use the rgcam package to make requests to this running server.  Note to make requests on a remote server having Java installed on your local machine is not actually required.
+```R
+# Note this example is not run since it requires a running server to connect to.
+queries <- xml2::read_xml(system.file("ModelInterface", "sample-queries-interactive.xml",
+                              package="rgcam"))
+query_name <- "CO2 emissions by region"
+co2_query <- xml2::xml_find_first(queries, paste0("//*[@title='", query_name, "']"))
+# Note the default host and port are localhost:8984, the same as BaseX defaults.
+remote_conn <- remoteDBConn("database_basexdb", "test", "test")
+# This "remote" connection object is used as a drop in replacement in any of the
+# add* methods for a "local" connection.
+examples.proj <- addSingleQuery(remote_conn, examples.proj, query_name, co2_query, c(), c())
+```
+
+### Decomposing the rgcam tools
+Generally using the add* methods provided should be sufficient for most user needs but the package also makes available the underlying methods that could be useful if a user wants to do something a little bit different.
+
+First `runQuery` is a S3 generic method that can run a single query on either a local or remote database and returns a tibble.  It follows all of the same conventions as `addScenario` or `addSingleQuery` since those are just using this method under the hood.
+```{R, message = FALSE}
+runQuery(conn, luc_query_query, c(), c("USA"))
+```
+
+Note that the `addScenario`, `addSingleQuery`, or `addMIBatchCSV` each utilize `addQueryTable` to do the work of adding a tibble to the project under the hood.  Note that `addQueryTable` will split the given table by scenario (as well as split scenario name from date and potentially fix up column names) for you.
+```{R}
+co2_conc <- getQuery(examples.proj, "CO2 concentrations", "Reference-filtered")
+co2_conc <- co2_conc %>%
+    mutate(scenario="Example") %>%
+    bind_rows(co2_conc)
+# co2_conc now has results from the scenario Reference-filtered and Example
+examples.proj <- addQueryTable(examples.proj, co2_conc, "CO2 concentrations", clobber=FALSE)
+# Now get Example in our list of scenarios
+listScenarios(examples.proj)
+# And the data for Example has been split out from Reference-filtered so that they can get
+# retrieved individually from the project.
+getQuery(examples.proj, "CO2 concentrations", "Example")
+```
+
+The `addScenario` method uses the `parse_batch_query` internally to parse a model interface batch query into a list of queries and runs each query in sequence.
+```{R}
+batch_queries <- parse_batch_query(SAMPLE.QUERIES)
+names(batch_queries)
+batch_queries[[1]]
+```
+
+### Adding transformations
+Each of the add* methods allows a "transformation" which is just a function that takes one tibble and returns a "transformed" version of that tibble.  The transformation must at the very least maintain the `scenario` column.
+```{R, message = FALSE}
+add_global_sum <- function(data) {
+    data %>% group_by_(.dots=paste0('`',names(data)[!(names(data) %in% c("region", "value"))],'`')) %>%
+        mutate(value=sum(value)) %>% mutate(region="Global") %>% ungroup() %>%
+        bind_rows(data)
+}
+# When running addScenario or addMIBatchCSV which process many tables at a time the transformations
+# are provides as a list[["Query Name"]] <- transformation_function
+transformations <- lapply(batch_queries[!(names(batch_queries) %in% c("CO2 concentrations","Climate forcing", "Global mean temperature"))], function(x) {
+    add_global_sum
+})
+examples.proj <- addScenario(conn, examples.proj, c(), SAMPLE.QUERIES, clobber=TRUE, transformations=transformations)
+getQuery(examples.proj, "Population by region")
+# When running addSingleQuery or addQueryTable you simply need to provide the function
+examples.proj <- addSingleQuery(conn, examples.proj, query_name, luc_query, c(), c(),
+                                clobber=TRUE, transformations=add_global_sum)
+getQuery(examples.proj, query_name)
+```
+
+### Scenarios in multiple databases
+Unfortunately there is no simple way to query across multiple databases so you must provide a mapping and update the connection appropriately.  When running many GCAM runs in parallel on a cluster such as PIC it could be useful to set in the `configuration.xml`
+```xml
+<!-- Note the append-scenario="1" ensures each db will have a unique name -->
+<Value write-output="1" append-scenario-name="1" name="xmldb-location">../output/db_</Value>
+```
+
+You could then update the connection for each scenario for example:
+```R
+scenarios <- c("Ref_C",  "Ref_U",  "UCT100_C",  "UCT100_U")
+proj_list <- lapply(scenarios, function(scenario) {
+    conn$dbFile <- paste0("db_", scenario)
+    # Note we set saveProj=FALSE simply for performance reasons as we will just
+    # save it at the end.
+    # We start with examples.proj (clobber is still false by default) so we can
+    # avoid re-running queries that we already have
+    addScenario(conn, examples.proj, scenario, SAMPLE.QUERIES, saveProj=FALSE)
+})
+# We now need to merge each scenario back into a single project.
+# mergeProjects will save the project in the end
+examples.proj <- mergeProjects(examples.proj, proj_list)
+```
+
+### Running queries in parallel
+Since each query is run in sequence and maybe you have a lot of queries+scenarios to run it maybe worth while to run queries in parallel.  The rgcam package does not provide facilities to handle this explicitly however BaseX can handle parallel requests.  Thus we can use the `parallel` package to send requests in a `parLapply` instead of a regular `lapply`.  This code is not run because it causes a firewall alert to pop up on many systems.
+```R    
+library(parallel)
+# We need to tell the parallel library how many cores we want to use
+# and we also need to explicitly load the rgcam package into it's
+# environmenmt (since each parallel executation happens in a seperate one)
+cluster <- makeCluster(detectCores())
+clusterEvalQ(cluster, library(rgcam))
+proj_list <- parLapply(cluster, batch_queries, function(query, conn) {
+    # We can use an existing project or just a "temp" if we want to just start fresh
+    # in either case we *have* to use saveProj=FALSE since otherwise it would try to
+    # write over itself in each parallel execution
+    addSingleQuery(conn, "temp", query$title, query$query, c(), query$regions, saveProj=F)
+}, conn)
+# We new need to merge each scenario back into a single project.
+# In this case we will clobber to make sure we get the freshly queried data.
+examples.proj <- mergeProjects(examples.proj, proj_list, clobber=TRUE)
+# We also need to explicitly stop the cluster when we are done using it.
+stopCluster(cluster)
+```

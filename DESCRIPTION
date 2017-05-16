@@ -1,6 +1,6 @@
 Package: rgcam
 Title: Tools for importing and working with GCAM results
-Version: 0.3.0
+Version: 0.4.0
 Authors@R: person("Robert", "Link", email = "robert.link@pnnl.gov", role = c("aut", "cre"))
 Description: This package provides tools for extracting data from GCAM
     output databases and importing that data into R for analysis.  The
@@ -11,7 +11,7 @@ Description: This package provides tools for extracting data from GCAM
     cleaning out unneeded scenarios).  The data structures created and
     loaded by this package are compatible with the GCAM analysis tools
     written and supported by the GCAM team.
-SystemRequirements: Java (>= 1.6.0)
+SystemRequirements: Java (>= 1.7.0)
 Depends:
     R (>= 3.2.3)
 License: GPL-2
@@ -20,7 +20,15 @@ LazyData: true
 Imports:
     stringr,
     lubridate,
-    dplyr
-RoxygenNote: 5.0.1
+    dplyr,
+    tidyr,
+    readr,
+    httr,
+    xml2
+RoxygenNote: 6.0.1
 Suggests: testthat,
-    covr
+    covr,
+    parallel,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
