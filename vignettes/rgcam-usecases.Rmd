@@ -263,16 +263,13 @@ examples.proj <- mergeProjects(examples.proj, proj_list)
 ```
 
 ### Running queries in parallel
-Since each query is run in sequence and maybe you have a lot of queries+scenarios to run it maybe worth while to run queries in parallel.  The rgcam package does not provide facilities to handle this explicitly however BaseX can handle parallel requests.  Thus we can use the `parallel` package to send requests in a `parLapply` instead of a regular `lapply`.
-```{R}
+Since each query is run in sequence and maybe you have a lot of queries+scenarios to run it maybe worth while to run queries in parallel.  The rgcam package does not provide facilities to handle this explicitly however BaseX can handle parallel requests.  Thus we can use the `parallel` package to send requests in a `parLapply` instead of a regular `lapply`.  This code is not run because it causes a firewall alert to pop up on many systems.
+```R    
 library(parallel)
 # We need to tell the parallel library how many cores we want to use
 # and we also need to explicitly load the rgcam package into it's
 # environmenmt (since each parallel executation happens in a seperate one)
-# Note a user can use detectCores to come up with the appropriate number
-# of parallel executions.  For the purposes of testing on Github a maximum
-# of two are allowed.
-cluster <- makeCluster(2)
+cluster <- makeCluster(detectCores())
 clusterEvalQ(cluster, library(rgcam))
 proj_list <- parLapply(cluster, batch_queries, function(query, conn) {
     # We can use an existing project or just a "temp" if we want to just start fresh

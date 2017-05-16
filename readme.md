@@ -70,10 +70,6 @@ the `rgcam` installed, run
 devtools::build_vignettes('rgcam')
 browsVignettes('rgcam')
 ```
-Note that when you run the first step you may get an alert saying that
-R is requesting to receive network connections through your firewall.
-We're working on getting that fixed.  In the meantime, you can _deny_
-this request without any ill effects.
 
 ## Getting Help
 
