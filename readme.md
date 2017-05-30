@@ -68,7 +68,7 @@ are described in a vignette included with the package.  Once you have
 the `rgcam` installed, run
 ```R
 devtools::build_vignettes('rgcam')
-browsVignettes('rgcam')
+browseVignettes('rgcam')
 ```
 
 ## Getting Help
