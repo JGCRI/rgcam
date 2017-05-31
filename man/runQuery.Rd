@@ -6,13 +6,14 @@
 \alias{runQuery.remoteDBConn}
 \title{Run queries via a GCAM database connection and recieve results as data.frame}
 \usage{
-runQuery(dbConn, query, scenarios = NULL, regions = NULL)
+runQuery(dbConn, query, scenarios = NULL, regions = NULL,
+  warn.empty = TRUE)
 
 \method{runQuery}{localDBConn}(dbConn, query, scenarios = NULL,
-  regions = NULL)
+  regions = NULL, warn.empty = TRUE)
 
 \method{runQuery}{remoteDBConn}(dbConn, query, scenarios = NULL,
-  regions = NULL)
+  regions = NULL, warn.empty = TRUE)
 }
 \arguments{
 \item{dbConn}{The connection to a database which will handle running the query.}
@@ -30,6 +31,8 @@ the database.}
 
 \item{regions}{A character vector of regions to query. \code{NULL} will
 run the query over all regions.}
+
+\item{warn.empty}{Flag: Issue a warning if a query is empty.}
 }
 \value{
 A data.frame with the results.

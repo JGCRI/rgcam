@@ -6,7 +6,7 @@
 \usage{
 addScenario(conn, proj, scenario = NULL, queryFile = NULL,
   clobber = FALSE, transformations = NULL, saveProj = TRUE,
-  saveProjEach = FALSE)
+  saveProjEach = FALSE, warn.empty = TRUE)
 }
 \arguments{
 \item{conn}{A GCAM database to extract scenario from.  This can be either a
@@ -37,6 +37,8 @@ calling \code{saveProject}.}
 \item{saveProjEach}{A flag to save the project to disk after each query has
 completed. This would be useful if a user suspects a failure in the middle
 of running queries and would like to not loose progress made.}
+
+\item{warn.empty}{Flag: issue warning when a query returns an empty table}
 }
 \value{
 The project dataset with the new scenario added.

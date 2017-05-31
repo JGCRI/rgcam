@@ -42,6 +42,17 @@ test_that('runQuery works with explicit arguments and local db', {
                                           "value"))
           })
 
+test_that('warnings issued appropriately for empty tables', {
+              expect_warning({rslt <- runQuery(conn, queries[[4]]$query,
+                                               regions='Canada')},
+                             'Query returned empty table')
+              expect_equal(nrow(rslt), 0)
+              expect_silent({rslt <- runQuery(conn, queries[[4]]$query,
+                                              regions='Canada',
+                                              warn.empty = FALSE)})
+              expect_equal(nrow(rslt), 0)
+          })
+
 test_that('empty region queries all region for XQuery style queries', {
     bld_xquery_query <- '<supplyDemandQuery title="Building Floorspace per capita">
         <axis1 name="Floorspace">input[@name]</axis1>

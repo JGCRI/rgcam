@@ -26,7 +26,7 @@ test_that('Data file is not created on error.', {
               nosuchfile <- tempfile()
               expect_false(file.exists(nosuchfile))
               bad_conn <- localDBConn(tempdir(), nosuchfile)
-              expect_error(addScenario(bad_conn, file.valid))
+              expect_error(addScenario(bad_conn, file.valid, warn.empty=FALSE))
               expect_false(file.exists(file.valid))
           })
 

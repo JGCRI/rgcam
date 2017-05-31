@@ -19,9 +19,11 @@
 #' the database.
 #' @param regions A character vector of regions to query. \code{NULL} will
 #' run the query over all regions.
+#' @param warn.empty Flag: Issue a warning if a query is empty.
 #' @return A data.frame with the results.
 #' @export
-runQuery <- function(dbConn, query, scenarios=NULL, regions=NULL)
+runQuery <- function(dbConn, query, scenarios=NULL, regions=NULL,
+                     warn.empty=TRUE)
     UseMethod("runQuery")
 
 
@@ -61,7 +63,8 @@ localDBConn <- function(dbPath, dbFile, miclasspath=NULL, migabble=TRUE) {
 #' @export
 #' @importFrom readr read_csv
 #' @importFrom dplyr %>% group_by_ summarize ungroup
-runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL) {
+runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
+                                 warn.empty=TRUE) {
     xqScenarios <- ifelse(length(scenarios) == 0, "()", paste0("('", paste(scenarios, collapse="','"), "')"))
     xqRegion <- ifelse(length(regions) == 0, "()", paste0("('", paste(regions, collapse="','"), "')"))
     # strip newlines from queries to avoid errors on windows
@@ -86,12 +89,9 @@ runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL) {
         suppress_col_spec <- NULL
     }
     results <- read_csv(pipe(paste(cmd, collapse=" ")), col_types=suppress_col_spec)
-    # The results for runMIQuery have not been aggregated (if for instance we are querying by region)
-    # so we should do that now.
-    results <- results %>%
-        group_by_(.dots=paste0('`',names(results)[names(results) != "value"],'`')) %>%
-        summarize(value=sum(value)) %>% ungroup()
-    return(results)
+    ## The results for runMIQuery have not been aggregated (if for instance we
+    ## are querying by region) so we should do that now.
+    miquery_post(results, query, scenarios, regions, warn.empty)
 }
 
 #' Create a connection to a remote database that can be use to run queries on.
@@ -128,7 +128,8 @@ remoteDBConn <- function(dbFile, username, password, address="localhost", port=8
 #' @export
 #' @importFrom httr POST authenticate http_error content
 #' @importFrom dplyr %>% group_by_ summarize ungroup
-runQuery.remoteDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL) {
+runQuery.remoteDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
+                                  warn.empty=TRUE) {
     xqScenarios <- ifelse(length(scenarios) == 0, "()", paste0("('", paste(scenarios, collapse="','"), "')"))
     xqRegion <- ifelse(length(regions) == 0, "()", paste0("('", paste(regions, collapse="','"), "')"))
     restQuery <- paste(
@@ -151,11 +152,40 @@ runQuery.remoteDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL) {
     }
 
     results <- content(response, "parsed")
-    # The results for runMIQuery have not been aggregated (if for instance we are querying by region)
-    # so we should do that now.
-    results <- results %>%
-        group_by_(.dots=paste0('`',names(results)[names(results) != "value"],'`')) %>%
-        summarize(value=sum(value)) %>% ungroup()
-    return(results)
+    ## The results for runMIQuery have not been aggregated (if for instance we
+    ## are querying by region) so we should do that now.
+
+    miquery_post(results, query, scenarios, regions, warn.empty)
 }
 
+#' Post-process raw query results
+#'
+#' The results returned by the ModelInterface query are not aggregated (if, for
+#' instance, the query is by region).  This function performs that aggregation,
+#' if applicable.
+#'
+#' @param results Table returned by the ModelInterface query.
+#' @param query The original query string.
+#' @param scenarios The scenarios requested in the query.
+#' @param regions The regions requested in the query.
+#' @param warn.empty Flag: issue warning if the results table is empty.
+#' @keywords internal
+miquery_post <- function(results, query, scenarios, regions, warn.empty) {
+    if(nrow(results) == 0) {
+        if(warn.empty) {
+            ## extract the title from the query string
+            m <- regexec('title="([^"]*)"', query)
+            qtitle <- regmatches(query, m)[[1]][2] # first capture group is in
+                                        # the second element (whole match is in
+                                        # the first)
+            warning('Query returned empty table:\nquery: ', qtitle, '\nscenarios: ',
+                    scenarios, '\nregions: ', regions)
+        }
+    }
+    else {
+        results <- results %>%
+          group_by_(.dots=paste0('`',names(results)[names(results) != "value"],'`')) %>%
+          summarize(value=sum(value)) %>% ungroup()
+    }
+    results
+}

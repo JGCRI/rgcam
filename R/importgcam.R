@@ -60,11 +60,13 @@
 #' @param saveProjEach A flag to save the project to disk after each query has
 #' completed. This would be useful if a user suspects a failure in the middle
 #' of running queries and would like to not loose progress made.
+#' @param warn.empty Flag: issue warning when a query returns an empty table
 #' @return The project dataset with the new scenario added.
 #' @export
 addScenario <- function(conn, proj, scenario=NULL, queryFile=NULL,
                         clobber=FALSE, transformations=NULL,
-                        saveProj=TRUE, saveProjEach=FALSE) {
+                        saveProj=TRUE, saveProjEach=FALSE,
+                        warn.empty=TRUE) {
 
     if(is.character(conn)) {
         conn <- localDBConn(dirname(conn), basename(conn))
@@ -95,8 +97,12 @@ addScenario <- function(conn, proj, scenario=NULL, queryFile=NULL,
             warning(paste("Skipping running query", qn, "since clobber is false and already exists in project."))
         } else {
             bq <- queries[[qn]]
-            table <- runQuery(conn, bq$query, scenario, bq$regions)
-            prjdata <- addQueryTable(prjdata, table, qn, clobber, transformations[[qn]], saveProj && saveProjEach)
+            table <- runQuery(conn, bq$query, scenario, bq$regions, warn.empty)
+            if(nrow(table) > 0) {
+                prjdata <- addQueryTable(prjdata, table, qn, clobber,
+                                         transformations[[qn]], saveProj &&
+                                           saveProjEach)
+            }
         }
     }
 
@@ -153,6 +159,7 @@ addScenario <- function(conn, proj, scenario=NULL, queryFile=NULL,
 #' A user may want to avoid it if they are for instance calling this method several
 #' times and would prefer to save at the end.  Users can always save at anytime by
 #' calling \code{saveProject}.
+#' @param warn.empty Flag: issue warning when a query returns an empty table
 #' @return The project dataset with the new scenario added.
 #'
 #' @examples
@@ -184,7 +191,7 @@ addScenario <- function(conn, proj, scenario=NULL, queryFile=NULL,
 #' @export
 addSingleQuery <- function(conn, proj, qn, query, scenario=NULL, regions=NULL,
                            clobber=FALSE, transformations=NULL,
-                           saveProj=TRUE) {
+                           saveProj=TRUE, warn.empty=TRUE) {
 
     prjdata <- loadProject(proj)
 
@@ -202,7 +209,7 @@ addSingleQuery <- function(conn, proj, qn, query, scenario=NULL, regions=NULL,
     {
         warning(paste("Skipping running query", qn, "since clobber is false and already exists in project."))
     } else {
-        table <- runQuery(conn, query, scenario, regions)
+        table <- runQuery(conn, query, scenario, regions, warn.empty)
         prjdata <- addQueryTable(prjdata, table, qn, clobber, transformations, saveProj)
     }
 
