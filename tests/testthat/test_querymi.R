@@ -42,6 +42,81 @@ test_that('runQuery works with explicit arguments and local db', {
                                           "value"))
           })
 
+test_that('empty region queries all region for XQuery style queries', {
+    bld_xquery_query <- '<supplyDemandQuery title="Building Floorspace per capita">
+        <axis1 name="Floorspace">input[@name]</axis1>
+        <axis2 name="Year">demand-physical[@vintage]</axis2>
+        <xPath buildList="true" dataName="percapita floorspace" group="false" sumAll="false">
+        <![CDATA[
+            declare function local:append-heirarchy($parent as node(), $append as node()) as node() {
+                let $scn := $parent/ancestor::scenario,
+                $rgn := $parent/ancestor::region,
+                $consumer := $parent/ancestor::gcam-consumer
+                return
+                document { element scenario {
+                    $scn/@*,
+                    element region {
+                        $rgn/@*,
+                        element gcam-consumer {
+                            $consumer/@*,
+                            $append
+                        }
+                    }
+                }
+                }
+            };
+            declare function local:get-percapita($inputs as node()*) as node()* {
+                unordered {
+                    for $input in $inputs
+                    let $new_input :=
+                        element input {
+                            attribute type {\'input\'},
+                            attribute name { $input/@name },
+                            for $demand in $input/floorspace
+                            return
+                            element demand-physical {
+                                attribute vintage {$demand/@year},
+                                (: TODO: hard coding units :)
+                                attribute unit { \'m^2/person\'},
+                                (: floorspace is billion m^2 and population is 1000 people and we want m^2/persion :)
+                                text { $demand/text() div $input/ancestor::gcam-consumer/subregional-population[@year=$demand/@year] * 1000000 }
+                            }
+                        },
+                    $new_root := local:append-heirarchy($input/parent::*/parent::*, $new_input)
+                    return $new_root//text()
+                }
+            };
+            declare function local:run-get-percapita($scenarios as xs:string*, $regions as xs:string*, $collection as xs:string) as node()* {
+                let $regionsG := if(not($regions[1] = \'Global\'))
+                    then $regions
+                else distinct-values(collection($collection)/scenario/world/*[@type=\'region\']/@name)
+                return
+                for $scenario in $scenarios,
+                $region in $regionsG
+                let $scenario_split := tokenize($scenario, \' \'),
+                $scenario_name := string-join($scenario_split[position() < last()], \' \'),
+                $scenario_date := $scenario_split[last()],
+                $currTree := collection($collection)/scenario[@name = $scenario_name and @date = $scenario_date]/world/*[@type = \'region\' and @name=$region]
+                return
+                local:get-percapita($currTree/gcam-consumer//building-node-input)
+
+            };
+            local:run-get-percapita((:scenarios:), (:regions:), (:collection:))
+            ]]>
+        </xPath>
+        <comments/>
+        </supplyDemandQuery>'
+
+    expect_silent({bld_data <- runQuery(conn, bld_xquery_query,
+                                    scenarios='Reference-filtered',
+                                    regions=c())})
+    # Note the sample DB has been filtered to only include just the region "USA"
+    # which is not ideal for the sake of this test since we would want to ensure
+    # for instance the model interface wasn't just returning the first region's
+    # results instead of all.  This is the best we can do for now.
+    expect_equal(unique(bld_data$region), c("USA"))
+    })
+
 
 ### TODO: test remote db queries, test queries on DB with a wider selection of
 ### regions and scenarios.
