@@ -415,6 +415,20 @@ test_that('addMIBatchCSV works.', {
     # it doesn't really matter.
 })
 
+test_that('addMIBatchCSV skip errors', {
+    SAMPLE.BATCH.CSV <- system.file("ModelInterface", "sample_with_errors.csv", package="rgcam")
+    expect_warning(prj_test <- addMIBatchCSV(SAMPLE.BATCH.CSV, "test", saveProj=FALSE),
+                   "Query returned empty table: GDP by region had error: java.lang.Exception: The query returned no results.")
+    expect_equal(listQueries(prj_test), c("Global mean temperature", "PPP GDP by region"))
+})
+
+test_that('addMIBatchCSV skip errors no warn', {
+    SAMPLE.BATCH.CSV <- system.file("ModelInterface", "sample_with_errors.csv", package="rgcam")
+    expect_message(prj_test <- addMIBatchCSV(SAMPLE.BATCH.CSV, "test", saveProj=FALSE, warn.empty=FALSE),
+                   "Scenario Reference-filtered does not exist in this project.  Creating.")
+    expect_equal(listQueries(prj_test), c("Global mean temperature", "PPP GDP by region"))
+})
+
 test_that('mergeProjects works.', {
     prj <- loadProject(file.valid)
     dup1_prj <- list(Dup1=dup.scenario(prj[[1]], "Dup1"))

@@ -255,11 +255,12 @@ sep.date <- function(scenstr) {
 #' Parse the raw output of a GCAM batch query into a set of tables.
 #'
 #' @param fn Name of the file containing the output from the GCAM Model Interface.
+#' @param warn.empty Flag: issue warning when a query returns an empty table
 #' @importFrom readr read_delim cols
 #' @importFrom dplyr %>% matches mutate
 #' @importFrom tidyr gather
 #' @keywords internal
-parse_mi_tables <- function(fn) {
+parse_mi_tables <- function(fn, warn.empty=TRUE) {
     ## transplanted from the gcammaptools package.
     tables <- list()
 
@@ -281,15 +282,25 @@ parse_mi_tables <- function(fn) {
 
     ##printlog("OK.", ts = F)
     tableheaders <- grep(headerline, fdata)
+    errorlines <- grep('^.* had error:', fdata)
+    tableheaders <- sort(c(tableheaders, errorlines))
     ##printlog("Table headers located in lines", tableheaders)
     table_name <- NA
 
     for (i in seq_along(tableheaders)) {
+        if(tableheaders[i] %in% errorlines) {
+            if(warn.empty) {
+                warning('Query returned empty table: ', fdata[tableheaders[i]])
+            }
+            next
+        }
+
         if (use_tablenames) {
             table_name <- fdata[tableheaders[i] - 1]
         } else {
             table_name <- i
         }
+
         ##printlog("Table", i, "name is", table_name)
 
         nskip <- tableheaders[i] - 1
@@ -302,6 +313,8 @@ parse_mi_tables <- function(fn) {
 
         if (i == length(tableheaders)) {
             nrows <- Inf
+        } else if(tableheaders[i+1] %in% errorlines) {
+            nrows <- tableheaders[i + 1] - tableheaders[i] - 1
         } else {
             nrows <- tableheaders[i + 1] - tableheaders[i] - 1 - use_tablenames  # i.e., subtract 1 is using table names
         }
@@ -351,13 +364,14 @@ parse_mi_tables <- function(fn) {
 #' @param saveProjEach A flag to save the project to disk after each query has
 #' completed. This would be useful if a user suspects a failure in the middle
 #' of running queries and would like to not loose progress made.
+#' @param warn.empty Flag: issue warning when a query returns an empty table
 #' @return The project dataset with the new scenario added.
 #' @export
 addMIBatchCSV <- function(fn, proj, clobber=FALSE, transformations=NULL,
-                          saveProj=TRUE, saveProjEach=FALSE){
+                          saveProj=TRUE, saveProjEach=FALSE, warn.empty=TRUE){
     proj <- loadProject(proj)
 
-    q_tables <- parse_mi_tables(fn)
+    q_tables <- parse_mi_tables(fn, warn.empty)
 
     # If no transformations are set just make it an empty list to simplify logic
     if(is.null(transformations)) {

@@ -4,10 +4,12 @@
 \alias{parse_mi_tables}
 \title{Parse the GCAM ModelInterface output}
 \usage{
-parse_mi_tables(fn)
+parse_mi_tables(fn, warn.empty = TRUE)
 }
 \arguments{
 \item{fn}{Name of the file containing the output from the GCAM Model Interface.}
+
+\item{warn.empty}{Flag: issue warning when a query returns an empty table}
 }
 \description{
 Parse the raw output of a GCAM batch query into a set of tables.
