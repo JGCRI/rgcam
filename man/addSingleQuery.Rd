@@ -5,7 +5,8 @@
 \title{Add a data by running a single on a GCAM output database to a project data set}
 \usage{
 addSingleQuery(conn, proj, qn, query, scenario = NULL, regions = NULL,
-  clobber = FALSE, transformations = NULL, saveProj = TRUE)
+  clobber = FALSE, transformations = NULL, saveProj = TRUE,
+  warn.empty = TRUE)
 }
 \arguments{
 \item{conn}{A GCAM database to connection extract scenario from.}
@@ -35,6 +36,8 @@ details).}
 A user may want to avoid it if they are for instance calling this method several
 times and would prefer to save at the end.  Users can always save at anytime by
 calling \code{saveProject}.}
+
+\item{warn.empty}{Flag: issue warning when a query returns an empty table}
 }
 \value{
 The project dataset with the new scenario added.

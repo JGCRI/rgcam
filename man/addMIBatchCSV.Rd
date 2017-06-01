@@ -5,7 +5,7 @@
 \title{Parse the GCAM ModelInterface output (DEPRECATED)}
 \usage{
 addMIBatchCSV(fn, proj, clobber = FALSE, transformations = NULL,
-  saveProj = TRUE, saveProjEach = FALSE)
+  saveProj = TRUE, saveProjEach = FALSE, warn.empty = TRUE)
 }
 \arguments{
 \item{fn}{Name of the file containing the output from the GCAM Model
@@ -29,6 +29,8 @@ calling \code{saveProject}.}
 \item{saveProjEach}{A flag to save the project to disk after each query has
 completed. This would be useful if a user suspects a failure in the middle
 of running queries and would like to not loose progress made.}
+
+\item{warn.empty}{Flag: issue warning when a query returns an empty table}
 }
 \value{
 The project dataset with the new scenario added.

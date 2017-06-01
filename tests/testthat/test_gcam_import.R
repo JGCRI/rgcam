@@ -26,7 +26,7 @@ test_that('Data file is not created on error.', {
               nosuchfile <- tempfile()
               expect_false(file.exists(nosuchfile))
               bad_conn <- localDBConn(tempdir(), nosuchfile)
-              expect_error(addScenario(bad_conn, file.valid))
+              expect_error(addScenario(bad_conn, file.valid, warn.empty=FALSE))
               expect_false(file.exists(file.valid))
           })
 
@@ -413,6 +413,20 @@ test_that('addMIBatchCSV works.', {
     # added to the batch query list but sample.csv didn't get updated.  From a testing
     # perspective it would be nice if these data matched but from a mechanical standpoint
     # it doesn't really matter.
+})
+
+test_that('addMIBatchCSV skip errors', {
+    SAMPLE.BATCH.CSV <- system.file("ModelInterface", "sample_with_errors.csv", package="rgcam")
+    expect_warning(prj_test <- addMIBatchCSV(SAMPLE.BATCH.CSV, "test", saveProj=FALSE),
+                   "Query returned empty table: GDP by region had error: java.lang.Exception: The query returned no results.")
+    expect_equal(listQueries(prj_test), c("Global mean temperature", "PPP GDP by region"))
+})
+
+test_that('addMIBatchCSV skip errors no warn', {
+    SAMPLE.BATCH.CSV <- system.file("ModelInterface", "sample_with_errors.csv", package="rgcam")
+    expect_message(prj_test <- addMIBatchCSV(SAMPLE.BATCH.CSV, "test", saveProj=FALSE, warn.empty=FALSE),
+                   "Scenario Reference-filtered does not exist in this project.  Creating.")
+    expect_equal(listQueries(prj_test), c("Global mean temperature", "PPP GDP by region"))
 })
 
 test_that('mergeProjects works.', {
