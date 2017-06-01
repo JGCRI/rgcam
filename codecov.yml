@@ -1,2 +1,2 @@
 comment:
-  layout: "header, reach, files, diff, tree, changes, sunburst"
+  layout: "header, files"
