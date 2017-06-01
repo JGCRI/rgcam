@@ -210,7 +210,9 @@ addSingleQuery <- function(conn, proj, qn, query, scenario=NULL, regions=NULL,
         warning(paste("Skipping running query", qn, "since clobber is false and already exists in project."))
     } else {
         table <- runQuery(conn, query, scenario, regions, warn.empty)
-        prjdata <- addQueryTable(prjdata, table, qn, clobber, transformations, saveProj)
+        if(nrow(table) > 0) {
+            prjdata <- addQueryTable(prjdata, table, qn, clobber, transformations, saveProj)
+        }
     }
 
     if(saveProj) {
