@@ -24,6 +24,7 @@ test_that('queries can be parsed', {
 
 
 test_that('runQuery works with default arguments and local db', {
+              skip('skip test')
               expect_silent({rslt <- runQuery(conn, queries[[4]]$query)})
               expect_true(is.data.frame(rslt))
               expect_equal(nrow(rslt), 22)
@@ -32,6 +33,7 @@ test_that('runQuery works with default arguments and local db', {
           })
 
 test_that('runQuery works with explicit arguments and local db', {
+              skip('skip test')
               queries <- parse_batch_query(SAMPLE.QUERIES)
               expect_silent({rslt <- runQuery(conn, queries[[4]]$query,
                                               scenarios='Reference-filtered',
