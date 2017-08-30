@@ -51,7 +51,7 @@ localDBConn <- function(dbPath, dbFile, miclasspath=NULL, migabble=TRUE) {
         miclasspath = DEFAULT.MICLASSPATH
     }
     db_inst <- structure(
-        list(miclasspath=miclasspath, dbPath=dbPath, dbFile=dbFile, migabble=migabble),
+        list(miclasspath=miclasspath, dbPath=normalizePath(dbPath), dbFile=dbFile, migabble=migabble),
         class="localDBConn")
 
     # TODO: ensure this connection is working
