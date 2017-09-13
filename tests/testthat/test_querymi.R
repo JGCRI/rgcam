@@ -27,8 +27,13 @@ test_that('runQuery works with default arguments and local db', {
               expect_silent({rslt <- runQuery(conn, queries[[4]]$query)})
               expect_true(is.data.frame(rslt))
               expect_equal(nrow(rslt), 22)
-              expect_equal(names(rslt), c("Units", "scenario", "region", "Year",
-                                          "value"))
+              expect_equal(names(rslt), c("Units", "scenario", "region", "year",
+                                          "value", "rundate"))
+              expect_equal(min(rslt$year), 1975)
+              expect_equal(max(rslt$year), 2100)
+              expect_true(all(rslt$scenario == 'Reference-filtered'))
+              expect_true(all(rslt$region == 'USA'))
+              expect_true(all(rslt$rundate == '2016-12-13 08:31:05'))
           })
 
 test_that('runQuery works with explicit arguments and local db', {
@@ -38,9 +43,14 @@ test_that('runQuery works with explicit arguments and local db', {
                                               regions='USA')})
               expect_true(is.data.frame(rslt))
               expect_equal(nrow(rslt), 22)
-              expect_equal(names(rslt), c("Units", "scenario", "region", "Year",
-                                          "value"))
-          })
+              expect_equal(names(rslt), c("Units", "scenario", "region", "year",
+                                          "value", "rundate"))
+              expect_equal(min(rslt$year), 1975)
+              expect_equal(max(rslt$year), 2100)
+              expect_true(all(rslt$scenario == 'Reference-filtered'))
+              expect_true(all(rslt$region == 'USA'))
+              expect_true(all(rslt$rundate == '2016-12-13 08:31:05'))
+})
 
 test_that('warnings issued appropriately for empty tables', {
               expect_warning({rslt <- runQuery(conn, queries[[4]]$query,

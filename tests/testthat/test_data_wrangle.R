@@ -1,5 +1,4 @@
-library('rgcam')
-library('dplyr')
+library('dplyr', warn.conflicts = FALSE, quietly = TRUE)
 
 context('GCAM data wrangling')
 
