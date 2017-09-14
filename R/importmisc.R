@@ -67,19 +67,16 @@ addQueryTable <- function(project, qdata, queryname, clobber=FALSE,
 
     project <- loadProject(project)
 
-    ## standardize the case of column names.
-    qdata <- stdcase(qdata)
-
-    ## Check to see if the scenario name includes a date marker.  If so, split
-    ## the date into its own column.
-    if(all(grepl('date=', qdata$scenario))) {
-        sd <- sep.date(qdata$scenario)
-        qdata <- dplyr::mutate(qdata, scenario=sd[['scenario']],
-                               rundate=sd[['date']])
+    ## check to see if we have a rundate column.  It should be produced
+    ## automatically when the query is run, but some legacy data might not have
+    ## it.  This will also standardize the case of the column names.
+    if(!('rundate' %in% names(qdata))) {
+        qdata <- table.cleanup(qdata)
     }
     else {
-        ## don't have dates, so put in an NA placeholder for now
-        qdata <- dplyr::mutate(qdata, rundate=NA)
+        ## standardize the case of column names.  Again, this should have
+        ## already been done, but this covers us in case of legacy data.
+        qdata <- stdcase(qdata)
     }
 
     if(!is.null(transformation)) {

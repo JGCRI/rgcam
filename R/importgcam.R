@@ -448,7 +448,10 @@ table.cleanup <- function(tbl)
 ## just the name of the scenario, without the date information that is typically
 ## packed into that column.
 table.scen.trim <- function(tbl) {
-    dplyr::mutate(tbl, scenario=sep.date(scenario)[['scenario']])
+    scendate <- sep.date(tbl[['scenario']])
+    dplyr::mutate(tbl,
+                  scenario=scendate[['scenario']],
+                  rundate=scendate[['date']])
 }
 
 #' Standardize the case of a table's columns.

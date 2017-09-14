@@ -4,6 +4,9 @@ SAMPLE.GCAMDBLOC <- system.file("extdata",
                                 package="rgcam")
 SAMPLE.QUERIES <- system.file("ModelInterface", "sample-queries.xml",
                               package="rgcam")
+refscen <- 'Reference-filtered'
+refdate <- lubridate::ymd_hms('2016-12-13 13:31:05')
+
 conn <- localDBConn(SAMPLE.GCAMDBLOC, "sample_basexdb")
 queries <- parse_batch_query(SAMPLE.QUERIES)
 
@@ -27,20 +30,32 @@ test_that('runQuery works with default arguments and local db', {
               expect_silent({rslt <- runQuery(conn, queries[[4]]$query)})
               expect_true(is.data.frame(rslt))
               expect_equal(nrow(rslt), 22)
-              expect_equal(names(rslt), c("Units", "scenario", "region", "Year",
-                                          "value"))
+              expect_equal(names(rslt), c("Units", "scenario", "region", "year",
+                                          "value", "rundate"))
+              expect_equal(min(rslt$year), 1975)
+              expect_equal(max(rslt$year), 2100)
+              expect_true(all(rslt$scenario == refscen))
+              expect_true(all(rslt$region == 'USA'))
+              crd <- class(rslt$rundate)
+              lrd <- rslt$rundate == refdate
+              expect_true(all(lrd), info=paste('rundate class= ', crd, ' failval= ', (rslt$rundate[lrd])[1]))
           })
 
 test_that('runQuery works with explicit arguments and local db', {
               queries <- parse_batch_query(SAMPLE.QUERIES)
               expect_silent({rslt <- runQuery(conn, queries[[4]]$query,
-                                              scenarios='Reference-filtered',
+                                              scenarios=refscen,
                                               regions='USA')})
               expect_true(is.data.frame(rslt))
               expect_equal(nrow(rslt), 22)
-              expect_equal(names(rslt), c("Units", "scenario", "region", "Year",
-                                          "value"))
-          })
+              expect_equal(names(rslt), c("Units", "scenario", "region", "year",
+                                          "value", "rundate"))
+              expect_equal(min(rslt$year), 1975)
+              expect_equal(max(rslt$year), 2100)
+              expect_true(all(rslt$scenario == refscen))
+              expect_true(all(rslt$region == 'USA'))
+              expect_true(all(rslt$rundate == refdate))
+})
 
 test_that('warnings issued appropriately for empty tables', {
               expect_warning({rslt <- runQuery(conn, queries[[4]]$query,
@@ -119,7 +134,7 @@ test_that('empty region queries all region for XQuery style queries', {
         </supplyDemandQuery>'
 
     expect_silent({bld_data <- runQuery(conn, bld_xquery_query,
-                                    scenarios='Reference-filtered',
+                                    scenarios=refscen,
                                     regions=c())})
     # Note the sample DB has been filtered to only include just the region "USA"
     # which is not ideal for the sake of this test since we would want to ensure

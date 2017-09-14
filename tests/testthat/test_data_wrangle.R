@@ -1,5 +1,4 @@
-library('rgcam')
-library('dplyr')
+library('dplyr', warn.conflicts = FALSE, quietly = TRUE)
 
 context('GCAM data wrangling')
 
@@ -64,3 +63,17 @@ test_that('scenarioDiff: throws errors for bad arguments.', {
               expect_error(diffScenarios(scenboth, data2=sceny),
                            'each must contain exactly one')
           })
+
+test_that('separating scenarion name from date works.', {
+    scenario <- rep("Reference-filtered,date=2016-13-12T05:31:05-08:00", 4)
+    scendate <- sep.date(scenario)
+    expect_true(all(scendate$scenario == 'Reference-filtered'))
+    refdate <- lubridate::ymd_hms('2016-12-13 13:31:05')
+    expect_true(all(scendate$date == refdate))
+    if(any(scendate$date != refdate)) {
+        baddate <- (scenario[scendate$date != refdate])[1]
+        splt <- stringr::str_split_fixed(baddate,',date=',2)
+        expect_true(FALSE, info=paste('scenario string: ', baddate, ' split[1]= ',
+                                      splt[1], ' split[2]= ', splt[2]))
+    }
+})

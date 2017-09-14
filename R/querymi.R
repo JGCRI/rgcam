@@ -187,5 +187,5 @@ miquery_post <- function(results, query, scenarios, regions, warn.empty) {
           group_by_(.dots=paste0('`',names(results)[names(results) != "value"],'`')) %>%
           summarize(value=sum(value)) %>% ungroup()
     }
-    results
+    table.cleanup(results)
 }
