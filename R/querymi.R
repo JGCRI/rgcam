@@ -193,6 +193,7 @@ runQuery.remoteDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
 #' @describeIn listScenariosInDB Run query specialization for remote databases
 #' @export
 #' @importFrom httr POST authenticate http_error content
+#' @importFrom readr cols col_character
 #' @importFrom dplyr %>% mutate
 listScenariosInDB.remoteDBConn <- function(dbConn) {
     restQuery <- paste(
@@ -213,7 +214,7 @@ listScenariosInDB.remoteDBConn <- function(dbConn) {
         stop(content(response, "text"))
     }
 
-    content(response, "parsed") %>%
+    content(response, "parsed", col_types=cols(name=col_character(), date=col_character())) %>%
         mutate(fqName = paste(name, date, sep=" "))
 }
 
