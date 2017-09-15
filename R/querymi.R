@@ -28,11 +28,17 @@ runQuery <- function(dbConn, query, scenarios=NULL, regions=NULL,
 
 #' Lists the Scenarios contained in a GCAM Database
 #'
-#' To run a query users need to supply a database connection, the query to run,
-#' the scenarios to query, and regions to query.
+#' To run a query users typically need to know the names of the scenarios in the
+#' database.  If they are the ones to generate the data in the first place they
+#' may already know this information.  Otherwise they could use this method to find
+#' out.  The result of this call will be a table with columns \code{name}, \code{date}, and \code{fqName}.
+#' The name and date are exactly as specified in the datbase. The fqName is the fully
+#' qualified scenario name which a user could use in the scenarios argument of \code{runQuery}
+#' if they need to disambiguate scenario names.
 #'
-#' @param dbConn The connection to a database which will handle running the query.
-#' @return A table with the results.
+#' @param dbConn The connection to a database which will handle listing the scenarios.
+#' @return A table with columns \code{name}, \code{date}, and \code{fqName} and rows for
+#' each scenario in the database.
 #' @export
 listScenariosInDB <- function(dbConn)
     UseMethod("listScenariosInDB")
@@ -105,10 +111,10 @@ runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
     miquery_post(results, query, scenarios, regions, warn.empty)
 }
 
-#' @describeIn listScenariosInDB Run a query on a local GCAM database
+#' @describeIn listScenariosInDB List scenarios in a local GCAM database
 #' @export
 #' @importFrom readr read_csv cols col_character
-#' @importFrom dplyr %>% mutate
+#' @importFrom dplyr mutate
 listScenariosInDB.localDBConn <- function(dbConn) {
     cmd <- c(
         "java",
@@ -122,8 +128,12 @@ listScenariosInDB.localDBConn <- function(dbConn) {
         shQuote("let $scns := collection()/scenario return document{ element csv { for $scn in $scns return element record { element name  { text { $scn/@name } }, element date { text { $scn/@date } } } } }")
     )
 
-    read_csv(pipe(paste(cmd, collapse=" ")), col_types=cols(name=col_character(), date=col_character())) %>%
-        mutate(fqName = paste(name, date, sep=" "))
+    result <- read_csv(pipe(paste(cmd, collapse=" ")), col_types=cols(name=col_character(), date=col_character()))
+    if(nrow(result) > 0) {
+        result <- mutate(result, fqName = paste(name, date, sep=" "))
+    }
+
+    result
 }
 
 #' Create a connection to a remote database that can be use to run queries on.
@@ -190,11 +200,11 @@ runQuery.remoteDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
     miquery_post(results, query, scenarios, regions, warn.empty)
 }
 
-#' @describeIn listScenariosInDB Run query specialization for remote databases
+#' @describeIn listScenariosInDB List scenarios in a remote database
 #' @export
 #' @importFrom httr POST authenticate http_error content
 #' @importFrom readr cols col_character
-#' @importFrom dplyr %>% mutate
+#' @importFrom dplyr mutate
 listScenariosInDB.remoteDBConn <- function(dbConn) {
     restQuery <- paste(
         '<rest:query xmlns:rest="http://basex.org/rest">',
@@ -214,8 +224,12 @@ listScenariosInDB.remoteDBConn <- function(dbConn) {
         stop(content(response, "text"))
     }
 
-    content(response, "parsed", col_types=cols(name=col_character(), date=col_character())) %>%
-        mutate(fqName = paste(name, date, sep=" "))
+    result <- content(response, "parsed", col_types=cols(name=col_character(), date=col_character()))
+    if(nrow(result) > 0) {
+        result <- mutate(result, fqName = paste(name, date, sep=" "))
+    }
+
+    result
 }
 
 #' Post-process raw query results

@@ -13,19 +13,25 @@ listScenariosInDB(dbConn)
 \method{listScenariosInDB}{remoteDBConn}(dbConn)
 }
 \arguments{
-\item{dbConn}{The connection to a database which will handle running the query.}
+\item{dbConn}{The connection to a database which will handle listing the scenarios.}
 }
 \value{
-A table with the results.
+A table with columns \code{name}, \code{date}, and \code{fqName} and rows for
+each scenario in the database.
 }
 \description{
-To run a query users need to supply a database connection, the query to run,
-the scenarios to query, and regions to query.
+To run a query users typically need to know the names of the scenarios in the
+database.  If they are the ones to generate the data in the first place they
+may already know this information.  Otherwise they could use this method to find
+out.  The result of this call will be a table with columns \code{name}, \code{date}, and \code{fqName}.
+The name and date are exactly as specified in the datbase. The fqName is the fully
+qualified scenario name which a user could use in the scenarios argument of \code{runQuery}
+if they need to disambiguate scenario names.
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{localDBConn}: Run a query on a local GCAM database
+\item \code{localDBConn}: List scenarios in a local GCAM database
 
-\item \code{remoteDBConn}: Run query specialization for remote databases
+\item \code{remoteDBConn}: List scenarios in a remote database
 }}
 
