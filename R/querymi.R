@@ -26,6 +26,23 @@ runQuery <- function(dbConn, query, scenarios=NULL, regions=NULL,
                      warn.empty=TRUE)
     UseMethod("runQuery")
 
+#' Lists the Scenarios contained in a GCAM Database
+#'
+#' To run a query users typically need to know the names of the scenarios in the
+#' database.  If they are the ones to generate the data in the first place they
+#' may already know this information.  Otherwise they could use this method to find
+#' out.  The result of this call will be a table with columns \code{name}, \code{date}, and \code{fqName}.
+#' The name and date are exactly as specified in the datbase. The fqName is the fully
+#' qualified scenario name which a user could use in the scenarios argument of \code{runQuery}
+#' if they need to disambiguate scenario names.
+#'
+#' @param dbConn The connection to a database which will handle listing the scenarios.
+#' @return A table with columns \code{name}, \code{date}, and \code{fqName} and rows for
+#' each scenario in the database.
+#' @export
+listScenariosInDB <- function(dbConn)
+    UseMethod("listScenariosInDB")
+
 
 #' Create a connection that can be used to run queries on a local GCAM database
 #'
@@ -94,6 +111,31 @@ runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
     miquery_post(results, query, scenarios, regions, warn.empty)
 }
 
+#' @describeIn listScenariosInDB List scenarios in a local GCAM database
+#' @export
+#' @importFrom readr read_csv cols col_character
+#' @importFrom dplyr mutate
+listScenariosInDB.localDBConn <- function(dbConn) {
+    cmd <- c(
+        "java",
+        paste("-cp", dbConn$miclasspath),
+        "-Xmx2g", #TODO: memory limits?
+        paste0("-Dorg.basex.DBPATH=", dbConn$dbPath),
+        "org.basex.BaseX",
+        "-smethod=csv",
+        "-scsv=header=yes",
+        paste0("-i", dbConn$dbFile),
+        shQuote("let $scns := collection()/scenario return document{ element csv { for $scn in $scns return element record { element name  { text { $scn/@name } }, element date { text { $scn/@date } } } } }")
+    )
+
+    result <- read_csv(pipe(paste(cmd, collapse=" ")), col_types=cols(name=col_character(), date=col_character()))
+    if(nrow(result) > 0) {
+        result <- mutate(result, fqName = paste(name, date, sep=" "))
+    }
+
+    result
+}
+
 #' Create a connection to a remote database that can be use to run queries on.
 #'
 #' This connection will attempt to connect to a remote BaseX server via a
@@ -156,6 +198,38 @@ runQuery.remoteDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
     ## are querying by region) so we should do that now.
 
     miquery_post(results, query, scenarios, regions, warn.empty)
+}
+
+#' @describeIn listScenariosInDB List scenarios in a remote database
+#' @export
+#' @importFrom httr POST authenticate http_error content
+#' @importFrom readr cols col_character
+#' @importFrom dplyr mutate
+listScenariosInDB.remoteDBConn <- function(dbConn) {
+    restQuery <- paste(
+        '<rest:query xmlns:rest="http://basex.org/rest">',
+        '<rest:text><![CDATA[',
+        'let $scns := collection()/scenario return document{ element csv { for $scn in $scns return element record { element name  { text { $scn/@name } }, element date { text { $scn/@date } } } } }',
+        ']]></rest:text>',
+        '<rest:parameter name="method" value="csv"/>',
+        '<rest:parameter name="media-type" value="text/csv"/>',
+        '<rest:parameter name="csv" value="header=yes"/>',
+        '</rest:query>' )
+    url <- paste0("http://", dbConn$address, ':', dbConn$port, "/rest/", dbConn$dbFile)
+
+    response <- POST(url, config=authenticate(dbConn$username, dbConn$password), body=restQuery )
+
+    # error if the POST did not return with a success
+    if(http_error(response)) {
+        stop(content(response, "text"))
+    }
+
+    result <- content(response, "parsed", col_types=cols(name=col_character(), date=col_character()))
+    if(nrow(result) > 0) {
+        result <- mutate(result, fqName = paste(name, date, sep=" "))
+    }
+
+    result
 }
 
 #' Post-process raw query results

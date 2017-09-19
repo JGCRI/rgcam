@@ -143,6 +143,21 @@ test_that('empty region queries all region for XQuery style queries', {
     expect_equal(unique(bld_data$region), c("USA"))
     })
 
+test_that('listScenariosInDB works on local DB', {
+    expect_silent({rslt <- listScenariosInDB(conn)})
+
+    expect_equal(nrow(rslt), 1)
+    expect_equal(rslt$name, "Reference-filtered")
+    expect_equal(rslt$date, "2016-13-12T05:31:05-08:00")
+    expect_equal(rslt$fqName, "Reference-filtered 2016-13-12T05:31:05-08:00")
+})
+
+test_that('listScenariosInDB gracefully gives empty table when no scenarios available', {
+    missing_conn <- localDBConn(SAMPLE.GCAMDBLOC, "missing_basexdb")
+    expect_warning({rslt <- listScenariosInDB(missing_conn)})
+
+    expect_equal(nrow(rslt), 0)
+})
 
 ### TODO: test remote db queries, test queries on DB with a wider selection of
 ### regions and scenarios.
