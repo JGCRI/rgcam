@@ -1,4 +1,5 @@
 [![Travis-CI Build Status](https://travis-ci.org/JGCRI/rgcam.svg?branch=master)](https://travis-ci.org/JGCRI/rgcam)
+[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/JGCRI/rgcam?branch=master&svg=true)](https://ci.appveyor.com/project/JGCRI/rgcam)
 [![Coverage Status](https://img.shields.io/codecov/c/github/JGCRI/rgcam/master.svg)](https://codecov.io/github/JGCRI/rgcam?branch=master)
 
 # rgcam: An R Package for Extracting and Importing GCAM Data
