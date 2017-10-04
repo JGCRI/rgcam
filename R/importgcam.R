@@ -482,7 +482,7 @@ stdcase <- function(tbl)
 #' customized version of the model interface for some reason, this should take
 #' care of all your GCAM query needs.
 DEFAULT.MICLASSPATH <- paste0(system.file("ModelInterface", "jars",
-                                          package="rgcam"),"/\\*",
+                                          package="rgcam"),"/*",
                               .Platform$path.sep,
                               system.file("ModelInterface",
                                           "ModelInterface.jar",
