@@ -118,9 +118,9 @@ runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
 listScenariosInDB.localDBConn <- function(dbConn) {
     cmd <- c(
         "java",
-        paste("-cp", dbConn$miclasspath),
+        paste("-cp", shQuote(dbConn$miclasspath)),
         "-Xmx2g", #TODO: memory limits?
-        paste0("-Dorg.basex.DBPATH=", dbConn$dbPath),
+        paste0("-Dorg.basex.DBPATH=", shQuote(dbConn$dbPath)),
         "org.basex.BaseX",
         "-smethod=csv",
         "-scsv=header=yes",
