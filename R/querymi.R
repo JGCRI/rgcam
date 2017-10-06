@@ -174,6 +174,8 @@ runQuery.remoteDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
                                   warn.empty=TRUE) {
     xqScenarios <- ifelse(length(scenarios) == 0, "()", paste0("('", paste(scenarios, collapse="','"), "')"))
     xqRegion <- ifelse(length(regions) == 0, "()", paste0("('", paste(regions, collapse="','"), "')"))
+    # handle nested CDATA tags
+    query <- gsub(']]>', ']]]]><![CDATA[>', query)
     restQuery <- paste(
         '<rest:query xmlns:rest="http://basex.org/rest">',
             '<rest:text><![CDATA[',
