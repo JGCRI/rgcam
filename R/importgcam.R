@@ -481,12 +481,12 @@ stdcase <- function(tbl)
 #' necessary jar files are bundled with the package, so unless you need a
 #' customized version of the model interface for some reason, this should take
 #' care of all your GCAM query needs.
-DEFAULT.MICLASSPATH <- paste0(system.file("ModelInterface", "jars",
-                                          package="rgcam"),"/*",
-                              .Platform$path.sep,
-                              system.file("ModelInterface",
-                                          "ModelInterface.jar",
-                                          package="rgcam"))
+DEFAULT.MICLASSPATH <- paste(
+    file.path(system.file("ModelInterface", "jars", package="rgcam"),
+              "*"),
+    file.path(system.file("ModelInterface", "ModelInterface.jar",
+                          package="rgcam")),
+    sep = .Platform$path.sep)
 
 #' Sample GCAM database file.
 #'
