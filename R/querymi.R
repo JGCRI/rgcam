@@ -118,9 +118,9 @@ runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
 listScenariosInDB.localDBConn <- function(dbConn) {
     cmd <- c(
         "java",
-        paste("-cp", dbConn$miclasspath),
+        paste("-cp", shQuote(dbConn$miclasspath)),
         "-Xmx2g", #TODO: memory limits?
-        paste0("-Dorg.basex.DBPATH=", dbConn$dbPath),
+        paste0("-Dorg.basex.DBPATH=", shQuote(dbConn$dbPath)),
         "org.basex.BaseX",
         "-smethod=csv",
         "-scsv=header=yes",
@@ -174,6 +174,8 @@ runQuery.remoteDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
                                   warn.empty=TRUE) {
     xqScenarios <- ifelse(length(scenarios) == 0, "()", paste0("('", paste(scenarios, collapse="','"), "')"))
     xqRegion <- ifelse(length(regions) == 0, "()", paste0("('", paste(regions, collapse="','"), "')"))
+    # handle nested CDATA tags
+    query <- gsub(']]>', ']]]]><![CDATA[>', query)
     restQuery <- paste(
         '<rest:query xmlns:rest="http://basex.org/rest">',
             '<rest:text><![CDATA[',

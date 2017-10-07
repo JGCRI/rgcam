@@ -99,7 +99,6 @@ test_that('project info functions work.', {
                              'Global mean temperature', 'GDP by region',
                              'PPP GDP by region',
                              'Population by region',
-                             'Aggregated Land Allocation',
                              'Building floorspace', 'Land Allocation'))
               ## drop from each scenario all but one query so we can test the
               ## 'anyscen' options.  We haven't tested dropQueries yet, so a
@@ -299,7 +298,7 @@ test_that('addQueryTable works.', {
               prj <- loadProject(file.valid)
               prj[['Scenario2']] <- dup.scenario(prj[[1]], 'Scenario2')
               prj <- saveProject(prj, altfile)
-              testqueryname <- 'Aggregated Land Allocation'
+              testqueryname <- 'Land Allocation'
 
               table1 <- getQuery(prj, testqueryname) # should
                                         # contain both scenarios

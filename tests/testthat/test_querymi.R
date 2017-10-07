@@ -13,12 +13,11 @@ queries <- parse_batch_query(SAMPLE.QUERIES)
 
 test_that('queries can be parsed', {
               expect_silent({qt <- parse_batch_query(SAMPLE.QUERIES)})
-              expect_equal(length(qt), 9)
+              expect_equal(length(qt), 8)
               expect_equal(names(qt),
                            c("CO2 concentrations", "Climate forcing",
                              "Global mean temperature",  "GDP by region",
                              "PPP GDP by region", "Population by region",
-                             "Aggregated Land Allocation",
                              "Building floorspace", "Land Allocation")
                            )
               expect_equal(qt[[3]]$query,

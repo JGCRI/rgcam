@@ -28,7 +28,7 @@ From there you can check the scenarios and queries that have been collected and 
 ```{R}
 listScenarios(examples.proj)
 listQueries(examples.proj)
-getQuery(examples.proj, "Aggregated Land Allocation")
+getQuery(examples.proj, "Land Allocation")
 ```
 
 By default `addScenario` saves the results to disk and can be loaded back.  Although if putting this in a script that may get run over again I would suggest leaving in the call
