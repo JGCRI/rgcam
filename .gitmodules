@@ -1,0 +1,3 @@
+[submodule "inst/ModelInterface/modelinterface"]
+	path = inst/ModelInterface/modelinterface
+	url = https://github.com/JGCRI/modelinterface.git
