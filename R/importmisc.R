@@ -62,7 +62,7 @@ addQueryTable <- function(project, qdata, queryname, clobber=FALSE,
     ## Check to see if either of the inputs are file names and if so replace
     ## them with the actual data.
     if(is.character(qdata)) {
-        qdata <- read.csv(qdata, row.names=FALSE)
+        qdata <- read.csv(qdata)
     }
 
     project <- loadProject(project)
