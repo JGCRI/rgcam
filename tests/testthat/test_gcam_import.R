@@ -371,6 +371,28 @@ test_that('addQueryTable works.', {
               unlink(altfile)
           })
 
+test_that('addQueryTable read from csv works.', {
+    altfile <- tempfile()     # avoid disturbing our test case
+    query_name <- "CO2 concentrations"
+    query_name_test <- paste0(query_name, "_TEST")
+    prj <- loadProject(file.valid)
+    comp.data <- getQuery(prj, query_name)
+
+    write.table(comp.data, altfile, row.names=FALSE, sep="|") # switch things up to ensure
+                                                              # additional arguments get used
+                                                              # in addQueryTable
+    expect_silent(prj <- addQueryTable(prj, altfile, query_name_test,
+                                        saveProj=FALSE, # do not save test project
+                                        sep="|", stringsAsFactors = FALSE)) # use the additional arguments to pass
+                                                                            # through to read.csv
+    # We expect the data to be the same after being read back in but we do
+    # need to be careful to get the types to be the same to avoid that error
+    expect_equal(tibble::as_tibble(getQuery(prj, query_name_test)), comp.data)
+
+    ## remove the tempfile
+    unlink(altfile)
+})
+
 test_that('addSingleQuery works.', {
     query_name <- "CO2 concentrations"
     prj <- loadProject(file.valid)
