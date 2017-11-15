@@ -54,15 +54,17 @@
 #' @param strict.rundate Flag: if \code{TRUE}, then require that the run dates
 #' match in order to add queries to a scenario, and fail the entire operation if
 #' they don't.  If \code{FALSE}, then ignore dates in the new data set.
+#' @param ... Additional parameters to be passed to \code{read.csv} if \code{qdata}
+#' is a file name and therefore will get read from csv.
 #' @export
 addQueryTable <- function(project, qdata, queryname, clobber=FALSE,
                           transformation=NULL, saveProj=TRUE,
-                          strict.rundate=FALSE)
+                          strict.rundate=FALSE, ...)
 {
     ## Check to see if either of the inputs are file names and if so replace
     ## them with the actual data.
     if(is.character(qdata)) {
-        qdata <- read.csv(qdata)
+        qdata <- read.csv(qdata, ...)
     }
 
     project <- loadProject(project)

@@ -5,7 +5,7 @@
 \title{Import a table of data into a project data set as a new query.}
 \usage{
 addQueryTable(project, qdata, queryname, clobber = FALSE,
-  transformation = NULL, saveProj = TRUE, strict.rundate = FALSE)
+  transformation = NULL, saveProj = TRUE, strict.rundate = FALSE, ...)
 }
 \arguments{
 \item{project}{The project data set to add the query to.  This can be either
@@ -32,6 +32,9 @@ calling \code{saveProject}.}
 \item{strict.rundate}{Flag: if \code{TRUE}, then require that the run dates
 match in order to add queries to a scenario, and fail the entire operation if
 they don't.  If \code{FALSE}, then ignore dates in the new data set.}
+
+\item{...}{Additional parameters to be passed to \code{read.csv} if \code{qdata}
+is a file name and therefore will get read from csv.}
 }
 \description{
 This function allows you to add a free-standing table to your project data.
