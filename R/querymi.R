@@ -89,7 +89,7 @@ runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
     cmd <- c(
         "java",
         paste("-cp", shQuote(dbConn$miclasspath)),
-        "-Xmx2g", #TODO: memory limits?
+        "-Xmx4g", #TODO: memory limits?
         paste0("-Dorg.basex.DBPATH=", shQuote(dbConn$dbPath)),
         paste0("-DModelInterface.SUPPRESS_OUTPUT=", dbConn$migabble),
         "org.basex.BaseX",
@@ -119,7 +119,7 @@ listScenariosInDB.localDBConn <- function(dbConn) {
     cmd <- c(
         "java",
         paste("-cp", shQuote(dbConn$miclasspath)),
-        "-Xmx2g", #TODO: memory limits?
+        "-Xmx4g", #TODO: memory limits?
         paste0("-Dorg.basex.DBPATH=", shQuote(dbConn$dbPath)),
         "org.basex.BaseX",
         "-smethod=csv",
