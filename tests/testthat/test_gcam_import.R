@@ -12,7 +12,7 @@ SAMPLE.GCAMDBLOC <- system.file("extdata",
                                 package="rgcam")
 SAMPLE.QUERIES <- system.file("ModelInterface", "sample-queries.xml",
                               package="rgcam")
-conn <- localDBConn(SAMPLE.GCAMDBLOC, "sample_basexdb")
+conn <- suppressMessages(localDBConn(SAMPLE.GCAMDBLOC, "sample_basexdb"))
 
 ## helper function for creating extra scenarios
 dup.scenario <- function(scen, newname) {
@@ -25,7 +25,7 @@ dup.scenario <- function(scen, newname) {
 test_that('Data file is not created on error.', {
               nosuchfile <- tempfile()
               expect_false(file.exists(nosuchfile))
-              bad_conn <- localDBConn(tempdir(), nosuchfile)
+              bad_conn <- localDBConn(tempdir(), nosuchfile, validatedb=FALSE)
               expect_error(addScenario(bad_conn, file.valid, warn.empty=FALSE))
               expect_false(file.exists(file.valid))
           })
