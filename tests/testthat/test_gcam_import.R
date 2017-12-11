@@ -470,8 +470,12 @@ test_that('mergeProjects works.', {
     expect_true(all(getQuery(merged_prj, "Extra Query", "Dup1")$value == 1234))
 })
 
+test_that('establishing a connection to a nonexistent server throws an error.', {
+    expect_error(remoteDBConn('does','not','exist'), 'Connection refused')
+})
+
 test_that('querying a remote server that is not running fails', {
-    remote_conn <- remoteDBConn("does", "not", "exist")
+    remote_conn <- remoteDBConn("does", "not", "exist", validatedb=FALSE)
     co2_query <- '<ClimateQuery title="CO2 concentrations">
                     <axis1 name="CO2-concentration">none</axis1>
                     <axis2 name="Year">CO2-concentration[@year]</axis2>

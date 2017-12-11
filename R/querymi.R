@@ -167,16 +167,30 @@ listScenariosInDB.localDBConn <- function(dbConn) {
 #' is "localhost"
 #' @param port The server port.  The default is 8984, the same as the default
 #' used by BaseX.
+#' @param validatedb If \code{TRUE}, check that a simple db query works on the
+#' connection; otherwise, don't run the check.
 #' @return A connection to a remote BaseX databasse which can be used to run
 #' queries.
 #' @export
-remoteDBConn <- function(dbFile, username, password, address="localhost", port=8984 ) {
+remoteDBConn <- function(dbFile, username, password, address="localhost",
+                         port=8984, validatedb=TRUE ) {
     db_inst <- structure(
         list(address=address, port=port, username=username, password=password, dbFile=dbFile),
         class="remoteDBConn")
 
-    # TODO: ensure this connection is working
+    if(validatedb) {
+        ## Print the scenarios in the database.  This will also allow us to check
+        ## whether the database is working
+        dbscen <- listScenariosInDB(db_inst)
 
+        if(nrow(dbscen) == 0) {
+            stop('Cannot read database : ', address, ':', port, 'user= ',
+                 username, '  file= ', dbFile)
+        }
+        else {
+            message('Database scenarios:  ', paste(dbscen$name, collapse=', '))
+        }
+    }
     return(db_inst)
 }
 
