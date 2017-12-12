@@ -4,7 +4,8 @@
 \alias{localDBConn}
 \title{Create a connection that can be used to run queries on a local GCAM database}
 \usage{
-localDBConn(dbPath, dbFile, miclasspath = NULL, migabble = TRUE)
+localDBConn(dbPath, dbFile, miclasspath = NULL, migabble = TRUE,
+  validatedb = TRUE)
 }
 \arguments{
 \item{dbPath}{The path in which the BaseX DBs are located.}
@@ -15,6 +16,9 @@ localDBConn(dbPath, dbFile, miclasspath = NULL, migabble = TRUE)
 
 \item{migabble}{If \code{TRUE}, discard model interface console output.  If
 \code{FALSE}, display console output.}
+
+\item{validatedb}{If \code{TRUE}, check that a simple db query works on the
+connection; otherwise, don't run the check.}
 }
 \value{
 A connection to a local BaseX databasse which can be used to run

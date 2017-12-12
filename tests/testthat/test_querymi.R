@@ -7,7 +7,7 @@ SAMPLE.QUERIES <- system.file("ModelInterface", "sample-queries.xml",
 refscen <- 'Reference-filtered'
 refdate <- lubridate::ymd_hms('2016-12-13 13:31:05')
 
-conn <- localDBConn(SAMPLE.GCAMDBLOC, "sample_basexdb")
+conn <- suppressMessages(localDBConn(SAMPLE.GCAMDBLOC, "sample_basexdb"))
 queries <- parse_batch_query(SAMPLE.QUERIES)
 
 
@@ -24,6 +24,13 @@ test_that('queries can be parsed', {
                            "<ClimateQuery title=\"Global mean temperature\">\n  <axis1 name=\"temperature\">none</axis1>\n  <axis2 name=\"Year\">global-mean-temperature[@year]</axis2>\n  <xPath buildList=\"true\" dataName=\"global-mean-temperature\" group=\"false\" sumAll=\"false\">climate-model/global-mean-temperature/text()</xPath>\n  <comments/>\n</ClimateQuery>")
           })
 
+
+test_that('trying to connect to an invalid database produces an error.', {
+              expect_error({dbc <-
+                  suppressWarnings(localDBConn(SAMPLE.GCAMDBLOC,
+                                               'nonexist_basexdb'))},
+                           'Database does not exist or is invalid')
+          })
 
 test_that('runQuery works with default arguments and local db', {
               expect_silent({rslt <- runQuery(conn, queries[[4]]$query)})
@@ -152,7 +159,7 @@ test_that('listScenariosInDB works on local DB', {
 })
 
 test_that('listScenariosInDB gracefully gives empty table when no scenarios available', {
-    missing_conn <- localDBConn(SAMPLE.GCAMDBLOC, "missing_basexdb")
+    missing_conn <- localDBConn(SAMPLE.GCAMDBLOC, "missing_basexdb", validatedb=FALSE)
     expect_warning({rslt <- listScenariosInDB(missing_conn)})
 
     expect_equal(nrow(rslt), 0)

@@ -4,7 +4,8 @@
 \alias{remoteDBConn}
 \title{Create a connection to a remote database that can be use to run queries on.}
 \usage{
-remoteDBConn(dbFile, username, password, address = "localhost", port = 8984)
+remoteDBConn(dbFile, username, password, address = "localhost", port = 8984,
+  validatedb = TRUE)
 }
 \arguments{
 \item{dbFile}{GCAM database to extract scenario from.}
@@ -20,6 +21,9 @@ is "localhost"}
 
 \item{port}{The server port.  The default is 8984, the same as the default
 used by BaseX.}
+
+\item{validatedb}{If \code{TRUE}, check that a simple db query works on the
+connection; otherwise, don't run the check.}
 }
 \value{
 A connection to a remote BaseX databasse which can be used to run
