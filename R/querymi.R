@@ -104,7 +104,7 @@ runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
     cmd <- c(
         "java",
         paste("-cp", shQuote(dbConn$miclasspath)),
-        "-Xmx4g", #TODO: memory limits?
+        "-Xmx16g", #TODO: memory limits?
         paste0("-Dorg.basex.DBPATH=", shQuote(dbConn$dbPath)),
         paste0("-DModelInterface.SUPPRESS_OUTPUT=", dbConn$migabble),
         "org.basex.BaseX",
