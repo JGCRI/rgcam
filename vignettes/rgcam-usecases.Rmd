@@ -114,7 +114,7 @@ The ability to run the database as a server is functionality provided entirely b
 
 # A Java classpath that minimaly includes BaseX.jar, ModelInterface.jar,
 # and BaseX's supporting libs (required to run the HTTP server)
-CLASSPATH=/pic/projects/GCAM/GCAM-libraries/src/basex-8.5.0/BaseX.jar:/pic/projects/GCAM/rgcam/inst/ModelInterface/ModelInterface.jar:/pic/projects/GCAM/GCAM-libraries/src/basex-8.5.0/lib/*
+CLASSPATH=/pic/projects/GCAM/GCAM-libraries/lib/basex-9.0.1/BaseX.jar:/pic/projects/GCAM/rgcam/inst/ModelInterface/ModelInterface.jar:/pic/projects/GCAM/GCAM-libraries/lib/basex-9.0.1/lib/*
 
 if [ "$1" = "stop" ] ; then
     # The user just wants to stop an already running server

@@ -109,7 +109,7 @@ runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
         paste0("-DModelInterface.SUPPRESS_OUTPUT=", dbConn$migabble),
         "org.basex.BaseX",
         "-smethod=csv",
-        "-scsv=header=yes",
+        "-scsv=header=yes,format=xquery",
         paste0("-i", dbConn$dbFile),
         shQuote(paste0("import module namespace mi = 'ModelInterface.ModelGUI2.xmldb.RunMIQuery';",
                        "mi:runMIQuery(", query, ",", xqScenarios, ",", xqRegion, ")"))
@@ -121,6 +121,7 @@ runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
         suppress_col_spec <- NULL
     }
     results <- read_csv(pipe(paste(cmd, collapse=" ")), col_types=suppress_col_spec)
+
     ## The results for runMIQuery have not been aggregated (if for instance we
     ## are querying by region) so we should do that now.
     miquery_post(results, query, scenarios, regions, warn.empty)
@@ -213,7 +214,7 @@ runQuery.remoteDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
             ']]></rest:text>',
             '<rest:parameter name="method" value="csv"/>',
             '<rest:parameter name="media-type" value="text/csv"/>',
-            '<rest:parameter name="csv" value="header=yes"/>',
+            '<rest:parameter name="csv" value="header=yes,format=xquery"/>',
         '</rest:query>' )
     url <- paste0("http://", dbConn$address, ':', dbConn$port, "/rest/", dbConn$dbFile)
 
