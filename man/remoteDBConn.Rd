@@ -4,8 +4,8 @@
 \alias{remoteDBConn}
 \title{Create a connection to a remote database that can be use to run queries on.}
 \usage{
-remoteDBConn(dbFile, username, password, address = "localhost", port = 8984,
-  validatedb = TRUE)
+remoteDBConn(dbFile, username, password, address = "localhost",
+  port = 8984, validatedb = TRUE)
 }
 \arguments{
 \item{dbFile}{GCAM database to extract scenario from.}

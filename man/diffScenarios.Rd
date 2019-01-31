@@ -4,8 +4,8 @@
 \alias{diffScenarios}
 \title{Compute a difference between two scenarios}
 \usage{
-diffScenarios(data, scenarios = NULL, keycols = "region", data2 = NULL,
-  aggfun = sum)
+diffScenarios(data, scenarios = NULL, keycols = "region",
+  data2 = NULL, aggfun = sum)
 }
 \arguments{
 \item{data}{The input query data.  The expected format is described below.}

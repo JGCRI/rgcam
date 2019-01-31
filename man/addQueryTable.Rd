@@ -5,7 +5,8 @@
 \title{Import a table of data into a project data set as a new query.}
 \usage{
 addQueryTable(project, qdata, queryname, clobber = FALSE,
-  transformation = NULL, saveProj = TRUE, strict.rundate = FALSE, ...)
+  transformation = NULL, saveProj = TRUE, strict.rundate = FALSE,
+  ...)
 }
 \arguments{
 \item{project}{The project data set to add the query to.  This can be either

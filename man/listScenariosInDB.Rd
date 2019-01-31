@@ -16,17 +16,18 @@ listScenariosInDB(dbConn)
 \item{dbConn}{The connection to a database which will handle listing the scenarios.}
 }
 \value{
-A table with columns \code{name}, \code{date}, and \code{fqName} and rows for
+A table with columns \code{name}, \code{date}, \code{version}, and \code{fqName} and rows for
 each scenario in the database.
 }
 \description{
 To run a query users typically need to know the names of the scenarios in the
 database.  If they are the ones to generate the data in the first place they
 may already know this information.  Otherwise they could use this method to find
-out.  The result of this call will be a table with columns \code{name}, \code{date}, and \code{fqName}.
+out.  The result of this call will be a table with columns \code{name}, \code{date}, \code{version}, and \code{fqName}.
 The name and date are exactly as specified in the datbase. The fqName is the fully
 qualified scenario name which a user could use in the scenarios argument of \code{runQuery}
-if they need to disambiguate scenario names.
+if they need to disambiguate scenario names.  We also include the GCAM version tag that was used
+to generate the scenario.
 }
 \section{Methods (by class)}{
 \itemize{
