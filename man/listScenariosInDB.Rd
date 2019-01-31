@@ -27,7 +27,7 @@ out.  The result of this call will be a table with columns \code{name}, \code{da
 The name and date are exactly as specified in the datbase. The fqName is the fully
 qualified scenario name which a user could use in the scenarios argument of \code{runQuery}
 if they need to disambiguate scenario names.  We also include the GCAM version tag that was used
-to generate the scenario.
+to generate the scenario in the format: \code{ver_<major>.<minor>_r<git describe value>}.
 }
 \section{Methods (by class)}{
 \itemize{
