@@ -377,6 +377,10 @@ test_that('addQueryTable read from csv works.', {
     query_name_test <- paste0(query_name, "_TEST")
     prj <- loadProject(file.valid)
     comp.data <- getQuery(prj, query_name)
+    # TODO: fix up column types manually because of mismatch between readr and base
+    # (used in addQueryTable) read CSV column detection.  Maybe we should convert
+    # addQueryTable to use readr for consistency
+    comp.data$year <- as.integer(comp.data$year)
 
     write.table(comp.data, altfile, row.names=FALSE, sep="|") # switch things up to ensure
                                                               # additional arguments get used
