@@ -26,6 +26,7 @@ test_that('queries can be parsed', {
 
 
 test_that('trying to connect to an invalid database produces an error.', {
+    skip("Skip due to bug tidyverse/readr#963")
               expect_error({dbc <-
                   suppressWarnings(localDBConn(SAMPLE.GCAMDBLOC,
                                                'nonexist_basexdb'))},
@@ -159,6 +160,7 @@ test_that('listScenariosInDB works on local DB', {
 })
 
 test_that('listScenariosInDB gracefully gives empty table when no scenarios available', {
+    skip("Skip due to bug tidyverse/readr#963")
     missing_conn <- localDBConn(SAMPLE.GCAMDBLOC, "missing_basexdb", validatedb=FALSE)
     expect_warning({rslt <- listScenariosInDB(missing_conn)})
 
