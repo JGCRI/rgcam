@@ -75,7 +75,7 @@ addScenario <- function(conn, proj, scenario=NULL, queryFile=NULL,
     prjdata <- loadProject(proj)
 
     if(is.null(queryFile)) {
-        queryFile <- SAMPLE.QUERIES
+        queryFile <- SAMPLE.QUERIES()
     }
 
     queries <- parse_batch_query(queryFile)
@@ -474,14 +474,14 @@ stdcase <- function(tbl)
     tbl
 }
 
-#' Default java class path for running the Model Interface
+#' Get the default java class path for running the Model Interface
 #'
 #' This is the class path you get if you pass \code{NULL} to any of the
 #' functions that run (directly or indirectly) the model interface.  The
 #' necessary jar files are bundled with the package, so unless you need a
 #' customized version of the model interface for some reason, this should take
 #' care of all your GCAM query needs.
-DEFAULT.MICLASSPATH <- paste(
+DEFAULT.MICLASSPATH <- function() paste(
     file.path(system.file("ModelInterface", "jars", package="rgcam"),
               "*"),
     file.path(system.file("ModelInterface", "ModelInterface.jar",
@@ -493,13 +493,13 @@ DEFAULT.MICLASSPATH <- paste(
 #' This file can be used for testing the mechanics of running GCAM queries using
 #' the functions in this package.  A lot of the data normally included in the
 #' database has been stripped out to control the total size, so a lot of queries
-#' won't work properly.  The \code{\link{SAMPLE.QUERIES}} should all work.
-SAMPLE.GCAMDB <- system.file("extdata","sample_basexdb",
+#' won't work properly.  The \code{\link{SAMPLE.QUERIES()}} should all work.
+SAMPLE.GCAMDB <- function() system.file("extdata","sample_basexdb",
                              package="rgcam")
 
 #' Sample GCAM query file
 #'
 #' These queries should work with the sample data in
 #' \code{\link{SAMPLE.GCAMDB}}.
-SAMPLE.QUERIES <- system.file("ModelInterface", "sample-queries.xml",
+SAMPLE.QUERIES <- function() system.file("ModelInterface", "sample-queries.xml",
                               package="rgcam")
