@@ -493,7 +493,7 @@ DEFAULT.MICLASSPATH <- function() paste(
 #' This file can be used for testing the mechanics of running GCAM queries using
 #' the functions in this package.  A lot of the data normally included in the
 #' database has been stripped out to control the total size, so a lot of queries
-#' won't work properly.  The \code{\link{SAMPLE.QUERIES()}} should all work.
+#' won't work properly.  The \code{\link{SAMPLE.QUERIES}} should all work.
 SAMPLE.GCAMDB <- function() system.file("extdata","sample_basexdb",
                              package="rgcam")
 

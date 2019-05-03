@@ -1,4 +1,5 @@
 library('rgcam')
+library('tibble', warn.conflicts = FALSE, quietly = TRUE)
 
 context('Loading and importing GCAM data')
 
@@ -391,7 +392,7 @@ test_that('addQueryTable read from csv works.', {
                                                                             # through to read.csv
     # We expect the data to be the same after being read back in but we do
     # need to be careful to get the types to be the same to avoid that error
-    expect_equal(tibble::as_tibble(getQuery(prj, query_name_test)), comp.data)
+    expect_equal(as_tibble(getQuery(prj, query_name_test)), comp.data)
 
     ## remove the tempfile
     unlink(altfile)
