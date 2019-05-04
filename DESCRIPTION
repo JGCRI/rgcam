@@ -1,6 +1,6 @@
 Package: rgcam
 Title: Tools for importing and working with GCAM results
-Version: 0.5.0
+Version: 1.0.0
 Authors@R: c(person("Robert", "Link", email = "robert.link@pnnl.gov", role = c("aut", "cre", "lyr", "ard")),
              person("Pralit", "Patel", email="pralit.patel@pnnl.gov", role="aut"))
 Description: This package provides tools for extracting data from GCAM
