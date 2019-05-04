@@ -58,6 +58,11 @@ co2 <- getQuery(project.data, 'query-name')
 }
 
 \author{
-\strong{Maintainer}: Robert Link \email{robert.link@pnnl.gov}
+\strong{Maintainer}: Robert Link \email{robert.link@pnnl.gov} [lyricist, artistic director]
+
+Authors:
+\itemize{
+  \item Pralit Patel \email{pralit.patel@pnnl.gov}
+}
 
 }

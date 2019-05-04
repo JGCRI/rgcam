@@ -68,7 +68,7 @@ listScenariosInDB <- function(dbConn)
 #' @export
 localDBConn <- function(dbPath, dbFile, miclasspath=NULL, migabble=TRUE, validatedb=TRUE) {
     if(is.null(miclasspath)) {
-        miclasspath = DEFAULT.MICLASSPATH
+        miclasspath = DEFAULT.MICLASSPATH()
     }
     db_inst <- structure(
         list(miclasspath=miclasspath, dbPath=normalizePath(dbPath), dbFile=dbFile, migabble=migabble),
