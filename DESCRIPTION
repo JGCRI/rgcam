@@ -21,6 +21,7 @@ LazyData: true
 Imports:
     stringr,
     lubridate,
+    tibble,
     dplyr,
     tidyr,
     readr,
