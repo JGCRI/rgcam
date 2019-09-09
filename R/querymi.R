@@ -102,6 +102,7 @@ runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
     # strip newlines and excess space from queries to avoid errors on windows
     query <- gsub('\n', '', query)
     query <- gsub('\\s+', ' ', query)
+    tmpfn <- tempfile()
     cmd <- c(
         "java",
         paste("-cp", shQuote(dbConn$miclasspath)),
@@ -112,9 +113,12 @@ runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
         "-smethod=csv",
         "-scsv=header=yes,format=xquery",
         paste0("-i", dbConn$dbFile),
-        shQuote(paste0("import module namespace mi = 'ModelInterface.ModelGUI2.xmldb.RunMIQuery';",
-                       "mi:runMIQuery(", query, ",", xqScenarios, ",", xqRegion, ")"))
+        paste("RUN", tmpfn, sep=" ")
         )
+    tmp_conn <- file(tmpfn, open = "w")
+    cat(paste0("import module namespace mi = 'ModelInterface.ModelGUI2.xmldb.RunMIQuery';",
+                       "mi:runMIQuery(", query, ",", xqScenarios, ",", xqRegion, ")"), file = tmp_conn, sep="\n")
+    close(tmp_conn)
     if(dbConn$migabble) {
         suppress_col_spec <- readr::cols()
     }
@@ -122,6 +126,7 @@ runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
         suppress_col_spec <- NULL
     }
     results <- read_csv(pipe(paste(cmd, collapse=" ")), col_types=suppress_col_spec)
+    unlink(tmpfn)
 
     ## The results for runMIQuery have not been aggregated (if for instance we
     ## are querying by region) so we should do that now.
