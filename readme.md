@@ -19,7 +19,7 @@ well as to manage previously created project data.
 
 To install rgcam, open an R session and run
 ```R
-install_github('JGCRI/rgcam')
+install_github('JGCRI/rgcam', build_vignettes=TRUE)
 ```
 The package includes a copy of the GCAM Model Interface and BaseX
 library (with a version TODO), so it is not necessary to have
@@ -68,7 +68,6 @@ The `rgcam` package now supports a number of advanced usage modes that
 are described in a vignette included with the package.  Once you have
 the `rgcam` installed, run
 ```R
-devtools::build_vignettes('rgcam')
 browseVignettes('rgcam')
 ```
 
