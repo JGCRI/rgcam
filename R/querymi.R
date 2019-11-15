@@ -63,15 +63,20 @@ listScenariosInDB <- function(dbConn)
 #' \code{FALSE}, display console output.
 #' @param validatedb If \code{TRUE}, check that a simple db query works on the
 #' connection; otherwise, don't run the check.
+#' @param maxMemory Sets the maximum memory for Java which will be used to run
+#' the queries.  The default value is \code{"4g"}.  Users may need to reduce this
+#' value if they are using a 32-bit Java or increase it if they suspect they are
+#' running out of memory (by using \code{migabble} to check the log).  Note the
+#' numeric value can be suffixed with "g" for Gigabyte or "m" for Megabyte.
 #' @return A connection to a local BaseX databasse which can be used to run
 #' queries.
 #' @export
-localDBConn <- function(dbPath, dbFile, miclasspath=NULL, migabble=TRUE, validatedb=TRUE) {
+localDBConn <- function(dbPath, dbFile, miclasspath=NULL, migabble=TRUE, validatedb=TRUE, maxMemory="4g") {
     if(is.null(miclasspath)) {
         miclasspath = DEFAULT.MICLASSPATH()
     }
     db_inst <- structure(
-        list(miclasspath=miclasspath, dbPath=normalizePath(dbPath), dbFile=dbFile, migabble=migabble),
+        list(miclasspath=miclasspath, dbPath=normalizePath(dbPath), dbFile=dbFile, migabble=migabble, maxMemory=maxMemory),
         class="localDBConn")
 
     if(validatedb) {
@@ -106,7 +111,7 @@ runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
     cmd <- c(
         "java",
         paste("-cp", shQuote(dbConn$miclasspath)),
-        "-Xmx16g", #TODO: memory limits?
+        paste0("-Xmx", dbConn$maxMemory),
         paste0("-Dorg.basex.DBPATH=", shQuote(dbConn$dbPath)),
         paste0("-DModelInterface.SUPPRESS_OUTPUT=", dbConn$migabble),
         "org.basex.BaseX",
@@ -141,7 +146,7 @@ listScenariosInDB.localDBConn <- function(dbConn) {
     cmd <- c(
         "java",
         paste("-cp", shQuote(dbConn$miclasspath)),
-        "-Xmx4g", #TODO: memory limits?
+        paste0("-Xmx", dbConn$maxMemory),
         paste0("-Dorg.basex.DBPATH=", shQuote(dbConn$dbPath)),
         "org.basex.BaseX",
         "-smethod=csv",
