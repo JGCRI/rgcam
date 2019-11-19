@@ -5,7 +5,7 @@
 \title{Create a connection that can be used to run queries on a local GCAM database}
 \usage{
 localDBConn(dbPath, dbFile, miclasspath = NULL, migabble = TRUE,
-  validatedb = TRUE)
+  validatedb = TRUE, maxMemory = "4g")
 }
 \arguments{
 \item{dbPath}{The path in which the BaseX DBs are located.}
@@ -19,6 +19,12 @@ localDBConn(dbPath, dbFile, miclasspath = NULL, migabble = TRUE,
 
 \item{validatedb}{If \code{TRUE}, check that a simple db query works on the
 connection; otherwise, don't run the check.}
+
+\item{maxMemory}{Sets the maximum memory for Java which will be used to run
+the queries.  The default value is \code{"4g"}.  Users may need to reduce this
+value if they are using a 32-bit Java or increase it if they suspect they are
+running out of memory (by using \code{migabble} to check the log).  Note the
+numeric value can be suffixed with "g" for Gigabyte or "m" for Megabyte.}
 }
 \value{
 A connection to a local BaseX databasse which can be used to run
