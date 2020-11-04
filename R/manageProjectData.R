@@ -109,8 +109,12 @@ loadProject <- function(proj) {
 #' @param prjdata Project data object.
 #' @param file Filename to save to.  If \code{NULL}, use the file the project
 #' was loaded from.
+#' @param compress The compress param to be passed on to \code{base::save}. Given
+#' we call this method indirectly from so many methods if not explicitly provided
+#' then we check the global options \code{options("rgcam.saved_compressed")} and if
+#' that is not set we fall back to the default behavior which continues to be "xz".
 #' @export
-saveProject <- function(prjdata, file=NULL) {
+saveProject <- function(prjdata, file=NULL, compress=NULL) {
     ## validate data first
     stat <- project.valid(prjdata)
     if(stat != 0) {
@@ -120,13 +124,25 @@ saveProject <- function(prjdata, file=NULL) {
         file <- attr(prjdata, 'file')
     }
 
+    # determine if we should compress the project file on save
+    # if the user did not explicitly provide a value we will check
+    # the global option "rgcam.saved_compressed"
+    if(is.null(compress)) {
+        compress <- options("rgcam.saved_compressed")[[1]]
+        # if it is still not provided we fall back to the default which
+        # is "xz"
+        if(is.null(compress)) {
+            compress = "xz"
+        }
+    }
+
     # strip file attribute before saving so the data file can be moved or
     # renamed and not cause any issues when it is reloaded.
     attr(prjdata, 'file') <- NULL
-    save(prjdata, file=file, compress='xz')
+    save(prjdata, file=file, compress=compress)
     # add the file attribute back on so users can continue to use it as
     # before.
-    # Note if the file param was specificied this is implicitly reseting
+    # Note if the file param was specified this is implicitly reseting
     # the file attribute on prjdata
     attr(prjdata, 'file') <- file
     invisible(prjdata)

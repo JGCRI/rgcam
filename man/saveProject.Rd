@@ -4,13 +4,18 @@
 \alias{saveProject}
 \title{Save project data to a backing file.}
 \usage{
-saveProject(prjdata, file = NULL)
+saveProject(prjdata, file = NULL, compress = NULL)
 }
 \arguments{
 \item{prjdata}{Project data object.}
 
 \item{file}{Filename to save to.  If \code{NULL}, use the file the project
 was loaded from.}
+
+\item{compress}{The compress param to be passed on to \code{base::save}. Given
+we call this method indirectly from so many methods if not explicitly provided
+then we check the global options \code{options("rgcam.saved_compressed")} and if
+that is not set we fall back to the default behavior which continues to be "xz".}
 }
 \description{
 Write a project data structure to its data file.  This should rarely be
