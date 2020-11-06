@@ -4,9 +4,18 @@
 \alias{addSingleQuery}
 \title{Add a data by running a single on a GCAM output database to a project data set}
 \usage{
-addSingleQuery(conn, proj, qn, query, scenario = NULL, regions = NULL,
-  clobber = FALSE, transformations = NULL, saveProj = TRUE,
-  warn.empty = TRUE)
+addSingleQuery(
+  conn,
+  proj,
+  qn,
+  query,
+  scenario = NULL,
+  regions = NULL,
+  clobber = FALSE,
+  transformations = NULL,
+  saveProj = TRUE,
+  warn.empty = TRUE
+)
 }
 \arguments{
 \item{conn}{A GCAM database to connection extract scenario from.}

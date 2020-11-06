@@ -4,9 +4,17 @@
 \alias{addScenario}
 \title{Add a scenario from a GCAM output database to a project data set}
 \usage{
-addScenario(conn, proj, scenario = NULL, queryFile = NULL,
-  clobber = FALSE, transformations = NULL, saveProj = TRUE,
-  saveProjEach = FALSE, warn.empty = TRUE)
+addScenario(
+  conn,
+  proj,
+  scenario = NULL,
+  queryFile = NULL,
+  clobber = FALSE,
+  transformations = NULL,
+  saveProj = TRUE,
+  saveProjEach = FALSE,
+  warn.empty = TRUE
+)
 }
 \arguments{
 \item{conn}{A GCAM database to extract scenario from.  This can be either a
