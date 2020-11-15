@@ -26,7 +26,6 @@ test_that('queries can be parsed', {
 
 
 test_that('trying to connect to an invalid database produces an error.', {
-    skip("Skip due to bug tidyverse/readr#963")
               expect_error({dbc <-
                   suppressWarnings(localDBConn(SAMPLE.GCAMDBLOC,
                                                'nonexist_basexdb'))},
@@ -69,6 +68,7 @@ test_that('warnings issued appropriately for empty tables', {
                                                regions='Canada')},
                              'Query returned empty table')
               expect_equal(nrow(rslt), 0)
+              skip("Skip due to readr bug which doesn't drop whitespace in an empty file then warns about it.")
               expect_silent({rslt <- runQuery(conn, queries[[4]]$query,
                                               regions='Canada',
                                               warn.empty = FALSE)})
@@ -160,9 +160,8 @@ test_that('listScenariosInDB works on local DB', {
 })
 
 test_that('listScenariosInDB gracefully gives empty table when no scenarios available', {
-    skip("Skip due to bug tidyverse/readr#963")
     missing_conn <- localDBConn(SAMPLE.GCAMDBLOC, "missing_basexdb", validatedb=FALSE)
-    expect_warning({rslt <- listScenariosInDB(missing_conn)})
+    expect_silent({rslt <- listScenariosInDB(missing_conn)})
 
     expect_equal(nrow(rslt), 0)
 })
