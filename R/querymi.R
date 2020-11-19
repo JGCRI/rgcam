@@ -99,7 +99,6 @@ localDBConn <- function(dbPath, dbFile, miclasspath=NULL, migabble=TRUE, validat
 #' @describeIn runQuery Run a query on a local GCAM database
 #' @export
 #' @importFrom readr read_csv
-#' @importFrom dplyr %>% group_by_ summarize ungroup
 runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
                                  warn.empty=TRUE) {
     xqScenarios <- ifelse(length(scenarios) == 0, "()", paste0("('", paste(scenarios, collapse="','"), "')"))
@@ -210,7 +209,6 @@ remoteDBConn <- function(dbFile, username, password, address="localhost",
 #' @describeIn runQuery Run query specialization for remote databases
 #' @export
 #' @importFrom httr POST authenticate http_error content
-#' @importFrom dplyr %>% group_by_ summarize ungroup
 runQuery.remoteDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
                                   warn.empty=TRUE) {
     xqScenarios <- ifelse(length(scenarios) == 0, "()", paste0("('", paste(scenarios, collapse="','"), "')"))
@@ -287,6 +285,7 @@ listScenariosInDB.remoteDBConn <- function(dbConn) {
 #' @param regions The regions requested in the query.
 #' @param warn.empty Flag: issue warning if the results table is empty.
 #' @keywords internal
+#' @importFrom dplyr %>% group_by_at vars summarize ungroup
 miquery_post <- function(results, query, scenarios, regions, warn.empty) {
     if(nrow(results) == 0) {
         if(warn.empty) {
@@ -301,7 +300,7 @@ miquery_post <- function(results, query, scenarios, regions, warn.empty) {
     }
     else {
         results <- results %>%
-          group_by_(.dots=paste0('`',names(results)[names(results) != "value"],'`')) %>%
+          group_by_at(vars(-value)) %>%
           summarize(value=sum(value)) %>% ungroup()
     }
     table.cleanup(results)

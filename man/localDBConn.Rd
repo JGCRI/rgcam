@@ -4,8 +4,14 @@
 \alias{localDBConn}
 \title{Create a connection that can be used to run queries on a local GCAM database}
 \usage{
-localDBConn(dbPath, dbFile, miclasspath = NULL, migabble = TRUE,
-  validatedb = TRUE, maxMemory = "4g")
+localDBConn(
+  dbPath,
+  dbFile,
+  miclasspath = NULL,
+  migabble = TRUE,
+  validatedb = TRUE,
+  maxMemory = "4g"
+)
 }
 \arguments{
 \item{dbPath}{The path in which the BaseX DBs are located.}

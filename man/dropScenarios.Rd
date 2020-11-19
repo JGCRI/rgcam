@@ -4,8 +4,7 @@
 \alias{dropScenarios}
 \title{Remove a scenario from a project data set}
 \usage{
-dropScenarios(proj, scenarios, invert = FALSE,
-  writeback = is.character(proj))
+dropScenarios(proj, scenarios, invert = FALSE, writeback = is.character(proj))
 }
 \arguments{
 \item{proj}{Project data or data file name.}

@@ -4,8 +4,15 @@
 \alias{addMIBatchCSV}
 \title{Parse the GCAM ModelInterface output (DEPRECATED)}
 \usage{
-addMIBatchCSV(fn, proj, clobber = FALSE, transformations = NULL,
-  saveProj = TRUE, saveProjEach = FALSE, warn.empty = TRUE)
+addMIBatchCSV(
+  fn,
+  proj,
+  clobber = FALSE,
+  transformations = NULL,
+  saveProj = TRUE,
+  saveProjEach = FALSE,
+  warn.empty = TRUE
+)
 }
 \arguments{
 \item{fn}{Name of the file containing the output from the GCAM Model

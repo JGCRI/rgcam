@@ -4,9 +4,14 @@
 \alias{dropQueries}
 \title{Drop specified queries from scenarios.}
 \usage{
-dropQueries(proj, queries, invert = FALSE,
-  writeback = is.character(proj), scenarios = NULL,
-  invertScenario = FALSE)
+dropQueries(
+  proj,
+  queries,
+  invert = FALSE,
+  writeback = is.character(proj),
+  scenarios = NULL,
+  invertScenario = FALSE
+)
 }
 \arguments{
 \item{proj}{Project data or data file name.}

@@ -6,14 +6,11 @@
 \alias{runQuery.remoteDBConn}
 \title{Run queries via a GCAM database connection and recieve results as data.frame}
 \usage{
-runQuery(dbConn, query, scenarios = NULL, regions = NULL,
-  warn.empty = TRUE)
+runQuery(dbConn, query, scenarios = NULL, regions = NULL, warn.empty = TRUE)
 
-\method{runQuery}{localDBConn}(dbConn, query, scenarios = NULL,
-  regions = NULL, warn.empty = TRUE)
+\method{runQuery}{localDBConn}(dbConn, query, scenarios = NULL, regions = NULL, warn.empty = TRUE)
 
-\method{runQuery}{remoteDBConn}(dbConn, query, scenarios = NULL,
-  regions = NULL, warn.empty = TRUE)
+\method{runQuery}{remoteDBConn}(dbConn, query, scenarios = NULL, regions = NULL, warn.empty = TRUE)
 }
 \arguments{
 \item{dbConn}{The connection to a database which will handle running the query.}
