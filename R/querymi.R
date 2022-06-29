@@ -108,7 +108,7 @@ runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
     query <- gsub('\\s+', ' ', query)
     tmpfn <- tempfile()
     cmd <- c(
-        "java",
+        #"java",
         paste("-cp", shQuote(dbConn$miclasspath)),
         paste0("-Xmx", dbConn$maxMemory),
         paste0("-Dorg.basex.DBPATH=", shQuote(dbConn$dbPath)),
@@ -129,7 +129,9 @@ runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
     else {
         suppress_col_spec <- NULL
     }
-    results <- read_csv(pipe(paste(cmd, collapse=" ")), col_types=suppress_col_spec)
+    #print(shQuote(paste(cmd, collapse=" ")))
+    system2("java", args=paste(cmd, collapse=" "), stdout = "temp_output.csv")
+    results <- read_csv("temp_output.csv", col_types=suppress_col_spec)
     unlink(tmpfn)
 
     ## The results for runMIQuery have not been aggregated (if for instance we
