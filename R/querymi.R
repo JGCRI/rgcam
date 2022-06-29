@@ -106,9 +106,9 @@ runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
     # strip newlines and excess space from queries to avoid errors on windows
     query <- gsub('\n', '', query)
     query <- gsub('\\s+', ' ', query)
-    tmpfn <- tempfile()
-    cmd <- c(
-        "java",
+    tmp_query_fn <- tempfile()
+    tmp_output_fn <- tempfile()
+    cmd_args <- c(
         paste("-cp", shQuote(dbConn$miclasspath)),
         paste0("-Xmx", dbConn$maxMemory),
         paste0("-Dorg.basex.DBPATH=", shQuote(dbConn$dbPath)),
@@ -116,21 +116,29 @@ runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
         "org.basex.BaseX",
         "-smethod=csv",
         "-scsv=header=yes,format=xquery",
+        # send output to a temp file, see NOTE below
+        paste0("-o", shQuote(tmp_output_fn)),
         paste0("-i", dbConn$dbFile),
-        paste("RUN", tmpfn, sep=" ")
+        paste("RUN", tmp_query_fn, sep=" ")
         )
-    tmp_conn <- file(tmpfn, open = "w")
+    tmp_query_conn <- file(tmp_query_fn, open = "w")
     cat(paste0("import module namespace mi = 'ModelInterface.ModelGUI2.xmldb.RunMIQuery';",
-                       "mi:runMIQuery(", query, ",", xqScenarios, ",", xqRegion, ")"), file = tmp_conn, sep="\n")
-    close(tmp_conn)
+                       "mi:runMIQuery(", query, ",", xqScenarios, ",", xqRegion, ")"), file = tmp_query_conn, sep="\n")
+    close(tmp_query_conn)
     if(dbConn$migabble) {
         suppress_col_spec <- readr::cols()
     }
     else {
         suppress_col_spec <- NULL
     }
-    results <- read_csv(pipe(paste(cmd, collapse=" ")), col_types=suppress_col_spec)
-    unlink(tmpfn)
+    # NOTE: since readr 1.4 all connections will go through a temporary file before
+    # being parsed.  Ideally we would stream this potentially large output, however
+    # given readr doesn't support it and `pipe` is unreliable on Windows anyhow we
+    # ask BaseX to write to a temporary file directly and read that into read_csv
+    system2("java", args=paste(cmd_args, collapse=" "))
+    results <- read_csv(tmp_output_fn, col_types=suppress_col_spec)
+    unlink(tmp_query_fn)
+    unlink(tmp_output_fn)
 
     ## The results for runMIQuery have not been aggregated (if for instance we
     ## are querying by region) so we should do that now.
@@ -142,19 +150,27 @@ runQuery.localDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
 #' @importFrom readr read_csv cols col_character
 #' @importFrom dplyr mutate
 listScenariosInDB.localDBConn <- function(dbConn) {
-    cmd <- c(
-        "java",
+    tmp_output_fn <- tempfile()
+    cmd_args <- c(
         paste("-cp", shQuote(dbConn$miclasspath)),
         paste0("-Xmx", dbConn$maxMemory),
         paste0("-Dorg.basex.DBPATH=", shQuote(dbConn$dbPath)),
         "org.basex.BaseX",
         "-smethod=csv",
         "-scsv=header=yes",
+        # send output to a temp file, see NOTE below
+        paste0("-o", shQuote(tmp_output_fn)),
         paste0("-i", dbConn$dbFile),
         shQuote("let $scns := collection()/scenario return document{ element csv { for $scn in $scns return element record { element name  { text { $scn/@name } }, element date { text { $scn/@date } }, element version { text{ $scn/model-version/text() } } } } }")
     )
 
-    result <- read_csv(pipe(paste(cmd, collapse=" ")), col_types=cols(name=col_character(), date=col_character(), version=col_character()))
+    # NOTE: since readr 1.4 all connections will go through a temporary file before
+    # being parsed.  Ideally we would stream this potentially large output, however
+    # given readr doesn't support it and `pipe` is unreliable on Windows anyhow we
+    # ask BaseX to write to a temporary file directly and read that into read_csv
+    system2("java", args=paste(cmd_args, collapse=" "))
+    result <- read_csv(tmp_output_fn, col_types=cols(name=col_character(), date=col_character(), version=col_character()))
+    unlink(tmp_output_fn)
     if(nrow(result) > 0) {
         result <- mutate(result, fqName = paste(name, date, sep=" "))
     }
