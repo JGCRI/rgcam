@@ -197,13 +197,15 @@ listScenariosInDB.localDBConn <- function(dbConn) {
 #' used by BaseX.
 #' @param validatedb If \code{TRUE}, check that a simple db query works on the
 #' connection; otherwise, don't run the check.
+#' @param migabble If \code{TRUE}, discard model interface console output.  If
+#' \code{FALSE}, display console output.
 #' @return A connection to a remote BaseX databasse which can be used to run
 #' queries.
 #' @export
 remoteDBConn <- function(dbFile, username, password, address="localhost",
-                         port=8984, validatedb=TRUE ) {
+                         port=8984, validatedb=TRUE, migabble=TRUE ) {
     db_inst <- structure(
-        list(address=address, port=port, username=username, password=password, dbFile=dbFile),
+        list(address=address, port=port, username=username, password=password, dbFile=dbFile, migabble=migabble),
         class="remoteDBConn")
 
     if(validatedb) {
@@ -250,7 +252,14 @@ runQuery.remoteDBConn <- function(dbConn, query, scenarios=NULL, regions=NULL,
         stop(content(response, "text"))
     }
 
-    results <- content(response, "parsed")
+    if(dbConn$migabble) {
+        suppress_col_spec <- readr::cols()
+    }
+    else {
+        suppress_col_spec <- NULL
+    }
+
+    results <- content(response, "parsed", col_types=suppress_col_spec)
     ## The results for runMIQuery have not been aggregated (if for instance we
     ## are querying by region) so we should do that now.
 
